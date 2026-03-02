@@ -2,7 +2,13 @@ export default function LandingPage() {
     return (
         <div
             className="min-h-screen font-sans text-gray-900"
-            style={{ backgroundImage: 'linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%)' }}
+            style={{
+                backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.35), rgba(240,242,245,0.45)), url(/backgrounds/welcome-bg.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundAttachment: 'fixed',
+                backgroundRepeat: 'no-repeat',
+            }}
         >
             {/* ===== NAVBAR ===== */}
             <nav className="bg-[#1a1a1a] border-b border-white/10 sticky top-0 z-50">

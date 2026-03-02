@@ -22,6 +22,8 @@ export default function StudentPortal() {
     const [showProfile, setShowProfile] = useState(false);
     const [editingRole, setEditingRole] = useState(false);
     const [editingCompany, setEditingCompany] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [rightPanelOpen, setRightPanelOpen] = useState(false);
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -83,12 +85,21 @@ export default function StudentPortal() {
 
     return (
         <div
-            className="min-h-screen min-w-[1280px] flex flex-col font-sans text-gray-900"
-            style={{ backgroundImage: 'linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%)' }}
+            className="min-h-screen flex flex-col font-sans text-gray-900"
+            style={{
+                backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.25), rgba(240,242,245,0.35)), url(/backgrounds/portal-bg.png)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundAttachment: 'fixed',
+                backgroundRepeat: 'no-repeat',
+            }}
         >
             {/* ===== HEADER ===== */}
-            <header className="h-[64px] bg-[#1a1a1a] border-b border-white/10 flex items-center justify-between px-10 shrink-0 z-20">
-                <div className="flex items-center gap-8">
+            <header className="h-[64px] bg-[#1a1a1a] border-b border-white/10 flex items-center justify-between px-4 sm:px-10 shrink-0 z-20">
+                <div className="flex items-center gap-4 sm:gap-8">
+                    <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10">
+                        <span className="material-symbols-outlined text-[24px]">menu</span>
+                    </button>
                     <div className="flex items-center gap-3">
                         <div className="bg-white/20 p-2 rounded-lg">
                             <span className="material-symbols-outlined text-white text-2xl">grid_view</span>
@@ -169,76 +180,82 @@ export default function StudentPortal() {
                 </div>
             </header>
 
+            {/* ===== LEFT SIDEBAR OVERLAY ===== */}
+            {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-30" onClick={() => setSidebarOpen(false)} />}
+            <aside className={`fixed top-0 left-0 h-full w-[300px] z-40 flex flex-col overflow-y-auto py-[32px] px-[24px] shadow-2xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`} style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
+                <div className="flex justify-between items-center mb-6">
+                    <span className="text-[18px] font-bold text-gray-900">Navigation</span>
+                    <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-white/40 rounded-lg transition-colors"><span className="material-symbols-outlined text-gray-600">close</span></button>
+                </div>
+                <nav className="flex-1 space-y-2 mb-8">
+                    <button onClick={() => { setActiveTab('dashboard'); setSidebarOpen(false); }} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'dashboard' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
+                        <span className="material-symbols-outlined mr-3 text-[20px]">dashboard</span>Dashboard
+                    </button>
+                    <button onClick={() => { setActiveTab('skills'); setSidebarOpen(false); }} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'skills' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
+                        <span className="material-symbols-outlined mr-3 text-[20px]">school</span>Skills Gap
+                    </button>
+                    <button onClick={() => { setActiveTab('jobs'); setSidebarOpen(false); }} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'jobs' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
+                        <span className="material-symbols-outlined mr-3 text-[20px]">work</span>Jobs
+                    </button>
+                    <button onClick={() => { setActiveTab('readiness'); setSidebarOpen(false); }} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'readiness' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
+                        <span className="material-symbols-outlined mr-3 text-[20px]">speed</span>Readiness
+                    </button>
+                    <button onClick={() => { setActiveTab('courses'); setSidebarOpen(false); }} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'courses' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
+                        <span className="material-symbols-outlined mr-3 text-[20px]">menu_book</span>Courses
+                    </button>
+                    <button onClick={() => { setActiveTab('applications'); setSidebarOpen(false); }} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'applications' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
+                        <span className="material-symbols-outlined mr-3 text-[20px]">assignment</span>Applications
+                    </button>
+                    <button onClick={() => { const report = buildStudentReport(mockReadinessData, mockApplications); const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'student_report.json'; a.click(); URL.revokeObjectURL(url); }} className="w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg text-gray-700 hover:bg-white/30 hover:text-gray-900 transition-colors">
+                        <span className="material-symbols-outlined mr-3 text-[20px]">download</span>Export Report
+                    </button>
+                </nav>
+                <div className="mt-auto">
+                    <h3 className="text-[20px] font-bold text-gray-900 leading-[1.4] mb-4">
+                        I want to be a{' '}
+                        {editingRole ? (
+                            <select className="text-blue-700 font-bold bg-white/40 rounded px-1 border border-white/50 text-[18px]" value={role} onChange={(e) => handleRoleChange(e.target.value)} onBlur={() => setEditingRole(false)} autoFocus>
+                                {roles.map(r => <option key={r} value={r}>{r}</option>)}
+                            </select>
+                        ) : (
+                            <span className="text-blue-700 cursor-pointer hover:underline" onClick={() => setEditingRole(true)}>{role}</span>
+                        )}
+                        {' '}at{' '}
+                        {editingCompany ? (
+                            <select className="text-blue-700 font-bold bg-white/40 rounded px-1 border border-white/50 text-[18px] underline decoration-2 underline-offset-4" value={company} onChange={(e) => handleCompanyChange(e.target.value)} onBlur={() => setEditingCompany(false)} autoFocus>
+                                {companies.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                        ) : (
+                            <span className="text-blue-700 underline decoration-2 underline-offset-4 cursor-pointer hover:text-blue-800" onClick={() => setEditingCompany(true)}>{company}.</span>
+                        )}
+                    </h3>
+                    <div
+                        className="inline-flex items-center gap-[6px] px-[14px] py-[6px] rounded-[50px] text-[13px] font-medium bg-white/40 text-gray-800 mb-5 border border-white/50 cursor-pointer hover:bg-white/50"
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        <span className="material-symbols-outlined text-[16px] text-gray-600">attach_file</span>
+                        {resumeFile ? resumeFile.name : 'Upload Resume'}
+                        <input type="file" accept=".pdf" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
+                    </div>
+                    <button
+                        onClick={handleGenerate}
+                        disabled={loading}
+                        className="w-full flex items-center justify-center gap-[8px] bg-blue-600 hover:bg-blue-700 text-white p-[14px] rounded-[12px] text-[16px] font-semibold transition-colors mt-5 shadow-lg shadow-blue-900/20 disabled:opacity-50"
+                    >
+                        {loading ? (
+                            <><span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>Analyzing...</>
+                        ) : (
+                            <><span className="material-symbols-outlined text-[20px]">timeline</span>Plot My Route</>
+                        )}
+                    </button>
+                </div>
+            </aside>
+
             {/* ===== BODY ===== */}
             <div className="flex flex-1 overflow-hidden">
-                {/* LEFT SIDEBAR */}
-                <aside className="w-[260px] border-r border-white/30 flex flex-col shrink-0 overflow-y-auto py-[32px] px-[24px]" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
-                    <nav className="flex-1 space-y-2 mb-8">
-                        <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'dashboard' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
-                            <span className="material-symbols-outlined mr-3 text-[20px]">dashboard</span>Dashboard
-                        </button>
-                        <button onClick={() => setActiveTab('skills')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'skills' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
-                            <span className="material-symbols-outlined mr-3 text-[20px]">school</span>Skills Gap
-                        </button>
-                        <button onClick={() => setActiveTab('jobs')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'jobs' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
-                            <span className="material-symbols-outlined mr-3 text-[20px]">work</span>Jobs
-                        </button>
-                        <button onClick={() => setActiveTab('readiness')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'readiness' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
-                            <span className="material-symbols-outlined mr-3 text-[20px]">speed</span>Readiness
-                        </button>
-                        <button onClick={() => setActiveTab('courses')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'courses' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
-                            <span className="material-symbols-outlined mr-3 text-[20px]">menu_book</span>Courses
-                        </button>
-                        <button onClick={() => setActiveTab('applications')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'applications' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
-                            <span className="material-symbols-outlined mr-3 text-[20px]">assignment</span>Applications
-                        </button>
-                        <button onClick={() => { const report = buildStudentReport(mockReadinessData, mockApplications); const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'student_report.json'; a.click(); URL.revokeObjectURL(url); }} className="w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg text-gray-700 hover:bg-white/30 hover:text-gray-900 transition-colors">
-                            <span className="material-symbols-outlined mr-3 text-[20px]">download</span>Export Report
-                        </button>
-                    </nav>
-                    <div className="mt-auto">
-                        <h3 className="text-[22px] font-bold text-gray-900 leading-[1.4] mb-4">
-                            I want to be a{' '}
-                            {editingRole ? (
-                                <select className="text-blue-700 font-bold bg-white/40 rounded px-1 border border-white/50 text-[18px]" value={role} onChange={(e) => handleRoleChange(e.target.value)} onBlur={() => setEditingRole(false)} autoFocus>
-                                    {roles.map(r => <option key={r} value={r}>{r}</option>)}
-                                </select>
-                            ) : (
-                                <span className="text-blue-700 cursor-pointer hover:underline" onClick={() => setEditingRole(true)}>{role}</span>
-                            )}
-                            {' '}at{' '}
-                            {editingCompany ? (
-                                <select className="text-blue-700 font-bold bg-white/40 rounded px-1 border border-white/50 text-[18px] underline decoration-2 underline-offset-4" value={company} onChange={(e) => handleCompanyChange(e.target.value)} onBlur={() => setEditingCompany(false)} autoFocus>
-                                    {companies.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
-                            ) : (
-                                <span className="text-blue-700 underline decoration-2 underline-offset-4 cursor-pointer hover:text-blue-800" onClick={() => setEditingCompany(true)}>{company}.</span>
-                            )}
-                        </h3>
-                        <div
-                            className="inline-flex items-center gap-[6px] px-[14px] py-[6px] rounded-[50px] text-[13px] font-medium bg-white/40 text-gray-800 mb-5 border border-white/50 cursor-pointer hover:bg-white/50"
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            <span className="material-symbols-outlined text-[16px] text-gray-600">attach_file</span>
-                            {resumeFile ? resumeFile.name : 'Upload Resume'}
-                            <input type="file" accept=".pdf" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-                        </div>
-                        <button
-                            onClick={handleGenerate}
-                            disabled={loading}
-                            className="w-full flex items-center justify-center gap-[8px] bg-blue-600 hover:bg-blue-700 text-white p-[14px] rounded-[12px] text-[16px] font-semibold transition-colors mt-5 shadow-lg shadow-blue-900/20 disabled:opacity-50"
-                        >
-                            {loading ? (
-                                <><span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>Analyzing...</>
-                            ) : (
-                                <><span className="material-symbols-outlined text-[20px]">timeline</span>Plot My Route</>
-                            )}
-                        </button>
-                    </div>
-                </aside>
 
                 {/* MAIN CONTENT */}
-                <main className="flex-grow p-[32px] overflow-y-auto">
+                <main className="flex-grow p-[24px] sm:p-[32px] overflow-y-auto">
                     <div className="max-w-5xl mx-auto">
 
                         {/* ===== DASHBOARD TAB ===== */}
@@ -414,72 +431,67 @@ export default function StudentPortal() {
                     </div>
                 </main>
 
-                {/* RIGHT SIDEBAR */}
-                <aside className="w-[300px] shrink-0 mt-[32px] mr-[24px] mb-[32px]">
-                    <div className="rounded-[16px] p-[28px] h-full overflow-y-auto border border-white/40 shadow-sm" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
-                        <h3 className="text-[15px] font-bold text-gray-900 mb-6">Suggested Next Steps</h3>
-                        <div className="space-y-4">
-                            {careerData && careerData.courses?.slice(0, 2).map((course, i) => (
-                                <a key={i} href={course.url} target="_blank" rel="noopener noreferrer" className="group p-4 rounded-xl shadow-sm transition-all cursor-pointer hover:opacity-90 border border-white/50 block" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
-                                    <div className="flex items-start gap-3 mb-3">
-                                        <div className="bg-white/40 p-2 rounded-lg text-gray-900 shrink-0">
-                                            <span className="material-symbols-outlined text-xl">{i === 0 ? 'book' : 'code_blocks'}</span>
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-[15px] text-gray-900 leading-tight mb-1">{course.title}</h4>
-                                            <p className="text-[13px] text-gray-700">{course.platform} • {course.instructor}</p>
-                                        </div>
-                                    </div>
-                                    <div className="w-full bg-black/10 h-1.5 rounded-full overflow-hidden">
-                                        <div className="bg-blue-600 h-full" style={{ width: `${(i + 1) * 25}%` }}></div>
-                                    </div>
-                                </a>
-                            ))}
-                            {(!careerData || !careerData.courses) && (
-                                <>
-                                    <div className="group p-4 rounded-xl shadow-sm transition-all cursor-pointer hover:opacity-90 border border-white/50" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
-                                        <div className="flex items-start gap-3 mb-3">
-                                            <div className="bg-white/40 p-2 rounded-lg text-gray-900 shrink-0">
-                                                <span className="material-symbols-outlined text-xl">book</span>
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-[15px] text-gray-900 leading-tight mb-1">Read &quot;Designing Data-Intensive Apps&quot;</h4>
-                                                <p className="text-[13px] text-gray-700">Chapter 4: Encoding</p>
-                                            </div>
-                                        </div>
-                                        <div className="w-full bg-black/10 h-1.5 rounded-full overflow-hidden"><div className="bg-blue-600 h-full w-1/4"></div></div>
-                                    </div>
-                                    <div className="group p-4 rounded-xl shadow-sm transition-all cursor-pointer hover:opacity-90 border border-white/50" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
-                                        <div className="flex items-start gap-3 mb-3">
-                                            <div className="bg-white/40 p-2 rounded-lg text-gray-900 shrink-0">
-                                                <span className="material-symbols-outlined text-xl">code_blocks</span>
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-[15px] text-gray-900 leading-tight mb-1">LeetCode Daily Challenge</h4>
-                                                <p className="text-[13px] text-gray-700">Medium • Array</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-end">
-                                            <span className="text-[13px] font-bold text-gray-900 bg-white/40 px-2.5 py-1 rounded-md">Start Now</span>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                        <div className="mt-8 pt-6 border-t border-white/40">
-                            <h3 className="text-[15px] font-bold text-gray-900 mb-4">Weekly Activity</h3>
-                            <div className="grid grid-cols-7 gap-1.5">
-                                {['bg-green-500/60', 'bg-green-500', 'bg-white/40', 'bg-green-600', 'bg-green-500/80', 'bg-white/40', 'bg-white/40'].map((c, i) => (
-                                    <div key={i} className={`h-10 w-full rounded ${c} hover:ring-2 hover:ring-blue-300 cursor-pointer transition-all`} title={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}></div>
-                                ))}
-                            </div>
-                            <div className="flex justify-between mt-2 text-[13px] text-gray-600">
-                                <span>Mon</span><span>Sun</span>
-                            </div>
-                        </div>
-                    </div>
-                </aside>
+                {/* RIGHT PANEL TOGGLE BUTTON */}
+                <button onClick={() => setRightPanelOpen(!rightPanelOpen)} className="fixed bottom-6 right-6 z-20 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg shadow-blue-900/30 transition-all hover:scale-105">
+                    <span className="material-symbols-outlined text-[24px]">{rightPanelOpen ? 'close' : 'info'}</span>
+                </button>
             </div>
+
+            {/* ===== RIGHT PANEL OVERLAY ===== */}
+            {rightPanelOpen && <div className="fixed inset-0 bg-black/40 z-30" onClick={() => setRightPanelOpen(false)} />}
+            <aside className={`fixed top-0 right-0 h-full w-[320px] z-40 overflow-y-auto shadow-2xl transition-transform duration-300 ${rightPanelOpen ? 'translate-x-0' : 'translate-x-full'}`} style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
+                <div className="p-[28px]">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-[15px] font-bold text-gray-900">Suggested Next Steps</h3>
+                        <button onClick={() => setRightPanelOpen(false)} className="p-1 hover:bg-white/40 rounded-lg transition-colors"><span className="material-symbols-outlined text-gray-600">close</span></button>
+                    </div>
+                    <div className="space-y-4">
+                        {careerData && careerData.courses?.slice(0, 2).map((course, i) => (
+                            <a key={i} href={course.url} target="_blank" rel="noopener noreferrer" className="group p-4 rounded-xl shadow-sm transition-all cursor-pointer hover:opacity-90 border border-white/50 block" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
+                                <div className="flex items-start gap-3 mb-3">
+                                    <div className="bg-white/40 p-2 rounded-lg text-gray-900 shrink-0">
+                                        <span className="material-symbols-outlined text-xl">{i === 0 ? 'book' : 'code_blocks'}</span>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-[15px] text-gray-900 leading-tight mb-1">{course.title}</h4>
+                                        <p className="text-[13px] text-gray-700">{course.platform} • {course.instructor}</p>
+                                    </div>
+                                </div>
+                                <div className="w-full bg-black/10 h-1.5 rounded-full overflow-hidden">
+                                    <div className="bg-blue-600 h-full" style={{ width: `${(i + 1) * 25}%` }}></div>
+                                </div>
+                            </a>
+                        ))}
+                        {(!careerData || !careerData.courses) && (
+                            <>
+                                <div className="group p-4 rounded-xl shadow-sm border border-white/50" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <div className="bg-white/40 p-2 rounded-lg text-gray-900 shrink-0"><span className="material-symbols-outlined text-xl">book</span></div>
+                                        <div><h4 className="font-bold text-[15px] text-gray-900 leading-tight mb-1">Read &quot;Designing Data-Intensive Apps&quot;</h4><p className="text-[13px] text-gray-700">Chapter 4: Encoding</p></div>
+                                    </div>
+                                    <div className="w-full bg-black/10 h-1.5 rounded-full overflow-hidden"><div className="bg-blue-600 h-full w-1/4"></div></div>
+                                </div>
+                                <div className="group p-4 rounded-xl shadow-sm border border-white/50" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <div className="bg-white/40 p-2 rounded-lg text-gray-900 shrink-0"><span className="material-symbols-outlined text-xl">code_blocks</span></div>
+                                        <div><h4 className="font-bold text-[15px] text-gray-900 leading-tight mb-1">LeetCode Daily Challenge</h4><p className="text-[13px] text-gray-700">Medium • Array</p></div>
+                                    </div>
+                                    <div className="flex justify-end"><span className="text-[13px] font-bold text-gray-900 bg-white/40 px-2.5 py-1 rounded-md">Start Now</span></div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                    <div className="mt-8 pt-6 border-t border-white/40">
+                        <h3 className="text-[15px] font-bold text-gray-900 mb-4">Weekly Activity</h3>
+                        <div className="grid grid-cols-7 gap-1.5">
+                            {['bg-green-500/60', 'bg-green-500', 'bg-white/40', 'bg-green-600', 'bg-green-500/80', 'bg-white/40', 'bg-white/40'].map((c, i) => (
+                                <div key={i} className={`h-10 w-full rounded ${c} hover:ring-2 hover:ring-blue-300 cursor-pointer transition-all`} title={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}></div>
+                            ))}
+                        </div>
+                        <div className="flex justify-between mt-2 text-[13px] text-gray-600"><span>Mon</span><span>Sun</span></div>
+                    </div>
+                </div>
+            </aside>
         </div>
     );
 }

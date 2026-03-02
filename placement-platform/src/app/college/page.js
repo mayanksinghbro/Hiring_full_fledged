@@ -8,6 +8,8 @@ import { batchStats } from '@/data/mockCollegeData';
 
 export default function CollegePortal() {
     const [activeTab, setActiveTab] = useState('overview');
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [rightPanelOpen, setRightPanelOpen] = useState(false);
     const [recentPlacements, setRecentPlacements] = useState([
         { id: 1, student: 'STU-2847', company: 'Google', role: 'SDE Intern', package: '₹18 LPA', date: '2026-02-28' },
         { id: 2, student: 'STU-1923', company: 'Amazon', role: 'SDE-1', package: '₹28 LPA', date: '2026-02-25' },
@@ -31,10 +33,19 @@ export default function CollegePortal() {
     ];
 
     return (
-        <div className="min-h-screen min-w-[1280px] flex flex-col font-sans text-gray-900" style={{ backgroundImage: 'linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%)' }}>
+        <div className="min-h-screen flex flex-col font-sans text-gray-900" style={{
+            backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.25), rgba(240,242,245,0.35)), url(/backgrounds/portal-bg.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
+            backgroundRepeat: 'no-repeat',
+        }}>
             {/* HEADER */}
-            <header className="h-[64px] bg-[#1a1a1a] border-b border-white/10 flex items-center justify-between px-10 shrink-0 z-20">
-                <div className="flex items-center gap-8">
+            <header className="h-[64px] bg-[#1a1a1a] border-b border-white/10 flex items-center justify-between px-4 sm:px-10 shrink-0 z-20">
+                <div className="flex items-center gap-4 sm:gap-8">
+                    <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10">
+                        <span className="material-symbols-outlined text-[24px]">menu</span>
+                    </button>
                     <div className="flex items-center gap-3">
                         <div className="bg-white/20 p-2 rounded-lg"><span className="material-symbols-outlined text-white text-2xl">grid_view</span></div>
                         <span className="text-[24px] font-bold tracking-tight text-white">Placify</span>
@@ -56,26 +67,32 @@ export default function CollegePortal() {
                 </div>
             </header>
 
+            {/* LEFT SIDEBAR OVERLAY */}
+            {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-30" onClick={() => setSidebarOpen(false)} />}
+            <aside className={`fixed top-0 left-0 h-full w-[300px] z-40 flex flex-col overflow-y-auto py-[32px] px-[24px] shadow-2xl transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`} style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
+                <div className="flex justify-between items-center mb-6">
+                    <span className="text-[18px] font-bold text-gray-900">Navigation</span>
+                    <button onClick={() => setSidebarOpen(false)} className="p-1 hover:bg-white/40 rounded-lg transition-colors"><span className="material-symbols-outlined text-gray-600">close</span></button>
+                </div>
+                <nav className="flex-1 space-y-2">
+                    {tabs.map(tab => (
+                        <button key={tab.id} onClick={() => { setActiveTab(tab.id); setSidebarOpen(false); }} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === tab.id ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
+                            <span className="material-symbols-outlined mr-3 text-[20px]">{tab.icon}</span>{tab.label}
+                        </button>
+                    ))}
+                </nav>
+                <div className="mt-auto pt-6 border-t border-white/40">
+                    <p className="text-[13px] text-gray-500 mb-2">Current Batch</p>
+                    <p className="text-[16px] font-bold text-gray-900">2025-26</p>
+                    <p className="text-[12px] text-gray-400 mt-1">{batchStats.totalStudents.toLocaleString()} students enrolled</p>
+                </div>
+            </aside>
+
             {/* BODY */}
             <div className="flex flex-1 overflow-hidden">
-                {/* LEFT SIDEBAR */}
-                <aside className="w-[260px] border-r border-white/30 flex flex-col shrink-0 overflow-y-auto py-[32px] px-[24px]" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
-                    <nav className="flex-1 space-y-2">
-                        {tabs.map(tab => (
-                            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === tab.id ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
-                                <span className="material-symbols-outlined mr-3 text-[20px]">{tab.icon}</span>{tab.label}
-                            </button>
-                        ))}
-                    </nav>
-                    <div className="mt-auto pt-6 border-t border-white/40">
-                        <p className="text-[13px] text-gray-500 mb-2">Current Batch</p>
-                        <p className="text-[16px] font-bold text-gray-900">2025-26</p>
-                        <p className="text-[12px] text-gray-400 mt-1">{batchStats.totalStudents.toLocaleString()} students enrolled</p>
-                    </div>
-                </aside>
 
                 {/* MAIN */}
-                <main className="flex-grow p-[32px] overflow-y-auto">
+                <main className="flex-grow p-[24px] sm:p-[32px] overflow-y-auto">
                     <div className="max-w-5xl mx-auto">
 
                         {/* ===== OVERVIEW TAB ===== */}
@@ -193,40 +210,49 @@ export default function CollegePortal() {
                     </div>
                 </main>
 
-                {/* RIGHT SIDEBAR */}
-                <aside className="w-[300px] shrink-0 mt-[32px] mr-[24px] mb-[32px]">
-                    <div className="rounded-[16px] p-[28px] h-full overflow-y-auto border border-white/40 shadow-sm" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
-                        <h3 className="text-[15px] font-bold text-gray-900 mb-6">Quick Stats</h3>
-                        <div className="space-y-5">
-                            <div className="text-center">
-                                <div className="relative w-[100px] h-[100px] mx-auto mb-3">
-                                    <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                                        <path className="fill-none stroke-white/50 stroke-[3.8]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                        <path className="fill-none stroke-green-500 stroke-[3.8] stroke-linecap-round" strokeDasharray={`${batchStats.placementRate}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                    </svg>
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-[20px] font-bold text-gray-900">{batchStats.placementRate}%</span>
-                                    </div>
+                {/* RIGHT PANEL TOGGLE BUTTON */}
+                <button onClick={() => setRightPanelOpen(!rightPanelOpen)} className="fixed bottom-6 right-6 z-20 bg-violet-600 hover:bg-violet-700 text-white p-3 rounded-full shadow-lg shadow-violet-900/30 transition-all hover:scale-105">
+                    <span className="material-symbols-outlined text-[24px]">{rightPanelOpen ? 'close' : 'info'}</span>
+                </button>
+            </div>
+
+            {/* RIGHT PANEL OVERLAY */}
+            {rightPanelOpen && <div className="fixed inset-0 bg-black/40 z-30" onClick={() => setRightPanelOpen(false)} />}
+            <aside className={`fixed top-0 right-0 h-full w-[320px] z-40 overflow-y-auto shadow-2xl transition-transform duration-300 ${rightPanelOpen ? 'translate-x-0' : 'translate-x-full'}`} style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
+                <div className="p-[28px]">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-[15px] font-bold text-gray-900">Quick Stats</h3>
+                        <button onClick={() => setRightPanelOpen(false)} className="p-1 hover:bg-white/40 rounded-lg transition-colors"><span className="material-symbols-outlined text-gray-600">close</span></button>
+                    </div>
+                    <div className="space-y-5">
+                        <div className="text-center">
+                            <div className="relative w-[100px] h-[100px] mx-auto mb-3">
+                                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                                    <path className="fill-none stroke-white/50 stroke-[3.8]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <path className="fill-none stroke-green-500 stroke-[3.8] stroke-linecap-round" strokeDasharray={`${batchStats.placementRate}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span className="text-[20px] font-bold text-gray-900">{batchStats.placementRate}%</span>
                                 </div>
-                                <p className="text-[13px] font-medium text-gray-600">Placement Rate</p>
                             </div>
-                            <div className="border-t border-white/40 pt-4 space-y-3">
-                                {[
-                                    { label: 'Avg Package', value: batchStats.avgPackage, color: 'text-blue-600' },
-                                    { label: 'Highest Package', value: batchStats.highestPackage, color: 'text-green-600' },
-                                    { label: 'Companies', value: batchStats.companiesVisited, color: 'text-purple-600' },
-                                    { label: 'Ongoing Drives', value: batchStats.ongoingDrives, color: 'text-orange-600' },
-                                ].map((stat) => (
-                                    <div key={stat.label} className="flex justify-between items-center">
-                                        <span className="text-[13px] text-gray-500">{stat.label}</span>
-                                        <span className={`text-[14px] font-bold ${stat.color}`}>{stat.value}</span>
-                                    </div>
-                                ))}
-                            </div>
+                            <p className="text-[13px] font-medium text-gray-600">Placement Rate</p>
+                        </div>
+                        <div className="border-t border-white/40 pt-4 space-y-3">
+                            {[
+                                { label: 'Avg Package', value: batchStats.avgPackage, color: 'text-blue-600' },
+                                { label: 'Highest Package', value: batchStats.highestPackage, color: 'text-green-600' },
+                                { label: 'Companies', value: batchStats.companiesVisited, color: 'text-purple-600' },
+                                { label: 'Ongoing Drives', value: batchStats.ongoingDrives, color: 'text-orange-600' },
+                            ].map((stat) => (
+                                <div key={stat.label} className="flex justify-between items-center">
+                                    <span className="text-[13px] text-gray-500">{stat.label}</span>
+                                    <span className={`text-[14px] font-bold ${stat.color}`}>{stat.value}</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                </aside>
-            </div>
+                </div>
+            </aside>
         </div>
     );
 }
