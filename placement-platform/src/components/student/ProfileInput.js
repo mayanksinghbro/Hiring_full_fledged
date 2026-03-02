@@ -9,7 +9,16 @@ const companies = ['Google', 'Microsoft', 'Amazon', 'Meta', 'Apple', 'Flipkart',
 export default function ProfileInput({ onGenerate }) {
     const [role, setRole] = useState('');
     const [company, setCompany] = useState('');
-    const [resumeUploaded, setResumeUploaded] = useState(false);
+    const [resumeFile, setResumeFile] = useState(null);
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file && file.type === 'application/pdf') {
+            setResumeFile(file);
+        } else {
+            alert('Please upload a valid PDF file.');
+        }
+    };
 
     return (
         <div className="glass-card p-6 fade-in-up">
@@ -66,26 +75,31 @@ export default function ProfileInput({ onGenerate }) {
                         <FileText className="h-4 w-4 text-indigo-400" />
                         Current Resume
                     </label>
-                    <button
-                        onClick={() => setResumeUploaded(true)}
-                        className={`w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-2.5 text-sm font-medium transition-all ${resumeUploaded
+                    <label
+                        className={`w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-2.5 text-sm font-medium transition-all cursor-pointer ${resumeFile
                                 ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-400'
                                 : 'border-slate-700 text-slate-500 hover:border-slate-600 hover:text-slate-400 hover:bg-slate-800/30'
                             }`}
                     >
-                        {resumeUploaded ? (
-                            <>✓ resume_uploaded.pdf</>
+                        <input 
+                            type="file" 
+                            accept=".pdf" 
+                            className="hidden" 
+                            onChange={handleFileChange} 
+                        />
+                        {resumeFile ? (
+                            <span className="truncate max-w-[200px]">✓ {resumeFile.name}</span>
                         ) : (
                             <><Upload className="h-4 w-4" /> Upload Resume (PDF)</>
                         )}
-                    </button>
+                    </label>
                 </div>
             </div>
 
             {/* Generate Button */}
             <div className="mt-6 flex justify-center">
                 <button
-                    onClick={() => onGenerate(role || 'Frontend Dev', company || 'Google')}
+                    onClick={() => onGenerate(role || 'Frontend Dev', company || 'Google', resumeFile)}
                     disabled={!role && !company}
                     style={{ opacity: (!role && !company) ? 0.5 : 1 }}
                     className="btn-primary flex items-center gap-2 text-base px-8 py-3"
