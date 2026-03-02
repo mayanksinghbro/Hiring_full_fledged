@@ -2,6 +2,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { mockGapAnalysis, defaultGapData } from '@/data/mockCareerData';
+import { mockReadinessData, mockCourseLibrary, mockApplications, buildStudentReport } from '@/data/mockStudentFeatures';
+import ReadinessDetails from '@/components/student/ReadinessDetails';
+import CourseLibrary from '@/components/student/CourseLibrary';
+import ApplicationTracker from '@/components/student/ApplicationTracker';
 
 const roles = ['Frontend Dev', 'Backend Dev', 'Full Stack Dev', 'Data Scientist', 'ML Engineer', 'DevOps Engineer'];
 const companies = ['Google', 'Microsoft', 'Amazon', 'Meta', 'Apple', 'Flipkart', 'Razorpay'];
@@ -20,7 +24,6 @@ export default function StudentPortal() {
     const [editingCompany, setEditingCompany] = useState(false);
     const fileInputRef = useRef(null);
 
-    // Load default career data on mount
     useEffect(() => {
         loadCareerData(role, company);
     }, []);
@@ -64,10 +67,8 @@ export default function StudentPortal() {
         }
     };
 
-    // Calculate match percentage from gaps
     const matchPercent = careerData ? Math.max(30, 100 - careerData.gaps.length * 12) : 72;
 
-    // Skill percentages from gaps
     const getSkillPercent = (severity) => {
         if (severity === 'low') return 80;
         if (severity === 'medium') return 55;
@@ -81,29 +82,32 @@ export default function StudentPortal() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#F0F2F5] min-w-[1280px] flex flex-col font-sans text-gray-900">
+        <div
+            className="min-h-screen min-w-[1280px] flex flex-col font-sans text-gray-900"
+            style={{ backgroundImage: 'linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%)' }}
+        >
             {/* ===== HEADER ===== */}
-            <header className="h-[64px] bg-white border-b border-gray-200 flex items-center justify-between px-10 shrink-0 z-20">
+            <header className="h-[64px] bg-[#1a1a1a] border-b border-white/10 flex items-center justify-between px-10 shrink-0 z-20">
                 <div className="flex items-center gap-8">
                     <div className="flex items-center gap-3">
-                        <div className="bg-blue-50 p-2 rounded-lg">
-                            <span className="material-symbols-outlined text-[#2563EB] text-2xl">grid_view</span>
+                        <div className="bg-white/20 p-2 rounded-lg">
+                            <span className="material-symbols-outlined text-white text-2xl">grid_view</span>
                         </div>
-                        <span className="text-[20px] font-bold tracking-tight text-gray-900">Placify</span>
+                        <span className="text-[24px] font-bold tracking-tight text-white">Placify</span>
                     </div>
                     <nav className="flex items-center gap-2 h-[64px]">
-                        <a href="/student" className="text-[14px] font-medium text-[#2563EB] px-4 h-full flex items-center border-b-2 border-[#2563EB]">Explore</a>
-                        <a href="/company" className="text-[14px] font-medium text-[#6B7280] px-4 h-full flex items-center hover:text-[#2563EB] border-b-2 border-transparent">Company</a>
-                        <a href="/college" className="text-[14px] font-medium text-[#6B7280] px-4 h-full flex items-center hover:text-[#2563EB] border-b-2 border-transparent">College</a>
+                        <a href="/student" className="text-[14px] font-medium text-white px-4 h-full flex items-center border-b-2 border-white">Explore</a>
+                        <a href="/company" className="text-[14px] font-medium text-white/70 px-4 h-full flex items-center hover:text-white border-b-2 border-transparent transition-colors">Company</a>
+                        <a href="/college" className="text-[14px] font-medium text-white/70 px-4 h-full flex items-center hover:text-white border-b-2 border-transparent transition-colors">College</a>
                     </nav>
                 </div>
                 <div className="flex-1 flex justify-center">
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <span className="material-symbols-outlined text-gray-400">search</span>
+                            <span className="material-symbols-outlined text-white/60">search</span>
                         </div>
                         <input
-                            className="block w-[400px] pl-[44px] pr-5 py-2.5 bg-[#F3F4F6] border-none rounded-[50px] text-[15px] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                            className="block w-[400px] pl-[44px] pr-5 py-2.5 bg-white/10 border border-white/20 rounded-[50px] text-[15px] text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-all backdrop-blur-sm"
                             placeholder="Explore career paths..."
                             type="text"
                             value={searchQuery}
@@ -113,14 +117,14 @@ export default function StudentPortal() {
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="relative">
-                        <button onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }} className="p-2 text-gray-500 hover:text-gray-700 relative">
+                        <button onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }} className="p-2 text-white/80 hover:text-white relative transition-colors">
                             <span className="material-symbols-outlined">notifications</span>
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white/20"></span>
                         </button>
                         {showNotifications && (
                             <div className="absolute right-0 top-12 w-[320px] bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
                                 <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center">
-                                    <span className="font-bold text-[14px]">Notifications</span>
+                                    <span className="font-bold text-[14px] text-gray-900">Notifications</span>
                                     <span className="text-[12px] text-[#2563EB] font-medium cursor-pointer">Mark all read</span>
                                 </div>
                                 {notifications.map(n => (
@@ -136,16 +140,16 @@ export default function StudentPortal() {
                         )}
                     </div>
                     <div className="relative">
-                        <div className="flex items-center gap-3 pl-4 border-l border-gray-200 cursor-pointer" onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}>
+                        <div className="flex items-center gap-3 pl-4 border-l border-white/20 cursor-pointer" onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}>
                             <div className="relative">
-                                <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-sm border-2 border-white shadow-sm">ST</div>
-                                <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white"></span>
+                                <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-sm border-2 border-white/20 shadow-sm">ST</div>
+                                <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white/20"></span>
                             </div>
                         </div>
                         {showProfile && (
                             <div className="absolute right-0 top-14 w-[200px] bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
                                 <div className="px-4 py-3 border-b border-gray-100">
-                                    <p className="font-bold text-[14px]">Alex Student</p>
+                                    <p className="font-bold text-[14px] text-gray-900">Alex Student</p>
                                     <p className="text-[12px] text-gray-400">alex@university.edu</p>
                                 </div>
                                 <a href="/student" className="block px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50">
@@ -168,49 +172,61 @@ export default function StudentPortal() {
             {/* ===== BODY ===== */}
             <div className="flex flex-1 overflow-hidden">
                 {/* LEFT SIDEBAR */}
-                <aside className="w-[260px] bg-white border-r border-gray-200 flex flex-col shrink-0 overflow-y-auto py-[32px] px-[24px]">
+                <aside className="w-[260px] border-r border-white/30 flex flex-col shrink-0 overflow-y-auto py-[32px] px-[24px]" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
                     <nav className="flex-1 space-y-2 mb-8">
-                        <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg ${activeTab === 'dashboard' ? 'sidebar-item-active' : 'text-[#6B7280] hover:bg-gray-50 hover:text-[#2563EB]'}`}>
+                        <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'dashboard' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
                             <span className="material-symbols-outlined mr-3 text-[20px]">dashboard</span>Dashboard
                         </button>
-                        <button onClick={() => setActiveTab('skills')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg ${activeTab === 'skills' ? 'sidebar-item-active' : 'text-[#6B7280] hover:bg-gray-50 hover:text-[#2563EB]'}`}>
+                        <button onClick={() => setActiveTab('skills')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'skills' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
                             <span className="material-symbols-outlined mr-3 text-[20px]">school</span>Skills Gap
                         </button>
-                        <button onClick={() => setActiveTab('jobs')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg ${activeTab === 'jobs' ? 'sidebar-item-active' : 'text-[#6B7280] hover:bg-gray-50 hover:text-[#2563EB]'}`}>
+                        <button onClick={() => setActiveTab('jobs')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'jobs' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
                             <span className="material-symbols-outlined mr-3 text-[20px]">work</span>Jobs
+                        </button>
+                        <button onClick={() => setActiveTab('readiness')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'readiness' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
+                            <span className="material-symbols-outlined mr-3 text-[20px]">speed</span>Readiness
+                        </button>
+                        <button onClick={() => setActiveTab('courses')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'courses' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
+                            <span className="material-symbols-outlined mr-3 text-[20px]">menu_book</span>Courses
+                        </button>
+                        <button onClick={() => setActiveTab('applications')} className={`w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg transition-colors ${activeTab === 'applications' ? 'sidebar-item-active' : 'text-gray-700 hover:bg-white/30 hover:text-gray-900'}`}>
+                            <span className="material-symbols-outlined mr-3 text-[20px]">assignment</span>Applications
+                        </button>
+                        <button onClick={() => { const report = buildStudentReport(mockReadinessData, mockApplications); const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'student_report.json'; a.click(); URL.revokeObjectURL(url); }} className="w-full flex items-center px-4 py-2 text-[14px] font-medium rounded-lg text-gray-700 hover:bg-white/30 hover:text-gray-900 transition-colors">
+                            <span className="material-symbols-outlined mr-3 text-[20px]">download</span>Export Report
                         </button>
                     </nav>
                     <div className="mt-auto">
                         <h3 className="text-[22px] font-bold text-gray-900 leading-[1.4] mb-4">
                             I want to be a{' '}
                             {editingRole ? (
-                                <select className="text-[#2563EB] font-bold bg-blue-50 rounded px-1 border border-blue-200 text-[18px]" value={role} onChange={(e) => handleRoleChange(e.target.value)} onBlur={() => setEditingRole(false)} autoFocus>
+                                <select className="text-blue-700 font-bold bg-white/40 rounded px-1 border border-white/50 text-[18px]" value={role} onChange={(e) => handleRoleChange(e.target.value)} onBlur={() => setEditingRole(false)} autoFocus>
                                     {roles.map(r => <option key={r} value={r}>{r}</option>)}
                                 </select>
                             ) : (
-                                <span className="text-[#2563EB] cursor-pointer hover:underline" onClick={() => setEditingRole(true)}>{role}</span>
+                                <span className="text-blue-700 cursor-pointer hover:underline" onClick={() => setEditingRole(true)}>{role}</span>
                             )}
                             {' '}at{' '}
                             {editingCompany ? (
-                                <select className="text-[#2563EB] font-bold bg-blue-50 rounded px-1 border border-blue-200 text-[18px] underline decoration-2 underline-offset-4" value={company} onChange={(e) => handleCompanyChange(e.target.value)} onBlur={() => setEditingCompany(false)} autoFocus>
+                                <select className="text-blue-700 font-bold bg-white/40 rounded px-1 border border-white/50 text-[18px] underline decoration-2 underline-offset-4" value={company} onChange={(e) => handleCompanyChange(e.target.value)} onBlur={() => setEditingCompany(false)} autoFocus>
                                     {companies.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             ) : (
-                                <span className="text-[#2563EB] underline decoration-2 underline-offset-4 cursor-pointer hover:text-blue-700" onClick={() => setEditingCompany(true)}>{company}.</span>
+                                <span className="text-blue-700 underline decoration-2 underline-offset-4 cursor-pointer hover:text-blue-800" onClick={() => setEditingCompany(true)}>{company}.</span>
                             )}
                         </h3>
                         <div
-                            className="inline-flex items-center gap-[6px] px-[14px] py-[6px] rounded-[50px] text-[13px] font-medium bg-[#F3F4F6] text-gray-700 mb-5 cursor-pointer hover:bg-gray-200"
+                            className="inline-flex items-center gap-[6px] px-[14px] py-[6px] rounded-[50px] text-[13px] font-medium bg-white/40 text-gray-800 mb-5 border border-white/50 cursor-pointer hover:bg-white/50"
                             onClick={() => fileInputRef.current?.click()}
                         >
-                            <span className="material-symbols-outlined text-[16px] text-gray-500">attach_file</span>
+                            <span className="material-symbols-outlined text-[16px] text-gray-600">attach_file</span>
                             {resumeFile ? resumeFile.name : 'Upload Resume'}
                             <input type="file" accept=".pdf" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
                         </div>
                         <button
                             onClick={handleGenerate}
                             disabled={loading}
-                            className="w-full flex items-center justify-center gap-[8px] bg-[#2563EB] hover:bg-blue-700 text-white p-[14px] rounded-[12px] text-[16px] font-semibold mt-5 disabled:opacity-50 transition-all"
+                            className="w-full flex items-center justify-center gap-[8px] bg-blue-600 hover:bg-blue-700 text-white p-[14px] rounded-[12px] text-[16px] font-semibold transition-colors mt-5 shadow-lg shadow-blue-900/20 disabled:opacity-50"
                         >
                             {loading ? (
                                 <><span className="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>Analyzing...</>
@@ -228,13 +244,15 @@ export default function StudentPortal() {
                         {/* ===== DASHBOARD TAB ===== */}
                         {activeTab === 'dashboard' && (
                             <>
-                                <div className="mb-6">
-                                    <h1 className="text-[28px] font-bold text-gray-900">Good morning, Alex! 👋</h1>
-                                    <p className="text-[15px] text-gray-500 mt-1">You&apos;re making great progress towards your goal.</p>
+                                <div className="flex justify-between items-end mb-6">
+                                    <div>
+                                        <h1 className="text-[32px] font-bold text-gray-900 leading-tight">Good morning, Alex! 👋</h1>
+                                        <p className="text-[16px] text-gray-600 mt-1">You&apos;re making great progress towards your goal.</p>
+                                    </div>
                                 </div>
 
                                 {/* Readiness Dashboard */}
-                                <div className="bg-white rounded-[16px] p-[28px] mb-[24px]">
+                                <div className="rounded-[16px] p-[28px] mb-[24px] shadow-sm" style={{ backgroundColor: '#DCD9D4', backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.50) 0%, rgba(0,0,0,0.50) 100%), radial-gradient(at 50% 0%, rgba(255,255,255,0.10) 0%, rgba(0,0,0,0.50) 50%)', backgroundBlendMode: 'soft-light, screen' }}>
                                     <div className="flex items-center justify-between mb-8">
                                         <h2 className="text-[20px] font-bold text-gray-900">Readiness Dashboard</h2>
                                         <button onClick={() => setActiveTab('skills')} className="text-[15px] text-[#2563EB] font-medium hover:underline">View details</button>
@@ -242,7 +260,7 @@ export default function StudentPortal() {
                                     <div className="flex items-center gap-[40px]">
                                         <div className="relative w-[120px] h-[120px] shrink-0">
                                             <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                                                <path className="fill-none stroke-gray-100 stroke-[3.8]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                                <path className="fill-none stroke-white/50 stroke-[3.8]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                                 <path className="fill-none stroke-[#2563EB] stroke-[3.8] stroke-linecap-round" strokeDasharray={`${matchPercent}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                             </svg>
                                             <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -254,7 +272,7 @@ export default function StudentPortal() {
                                             {careerData && careerData.gaps.slice(0, 3).map((gap, i) => (
                                                 <div key={i} className="flex items-center gap-[16px]">
                                                     <span className="text-[15px] font-semibold text-gray-900 w-32 shrink-0 truncate">{gap.skill.split(' ').slice(0, 3).join(' ')}</span>
-                                                    <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                                    <div className="flex-1 h-2.5 bg-white/50 rounded-full overflow-hidden">
                                                         <div className={`h-full rounded-full ${gap.severity === 'high' ? 'bg-orange-500' : gap.severity === 'medium' ? 'bg-blue-400' : 'bg-green-500'}`} style={{ width: `${getSkillPercent(gap.severity)}%` }}></div>
                                                     </div>
                                                     <span className={`px-2.5 py-1 rounded-full text-[13px] font-bold shrink-0 ${gap.severity === 'high' ? 'bg-orange-100 text-orange-700' : gap.severity === 'medium' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>
@@ -267,7 +285,7 @@ export default function StudentPortal() {
                                 </div>
 
                                 {/* Route Timeline */}
-                                <div className="bg-white rounded-[16px] p-[28px]">
+                                <div className="rounded-[16px] p-[28px] shadow-sm" style={{ backgroundColor: '#DCD9D4', backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.50) 0%, rgba(0,0,0,0.50) 100%), radial-gradient(at 50% 0%, rgba(255,255,255,0.10) 0%, rgba(0,0,0,0.50) 50%)', backgroundBlendMode: 'soft-light, screen' }}>
                                     <div className="flex items-center justify-between mb-6">
                                         <h2 className="text-[20px] font-bold text-gray-900">Your Route</h2>
                                         <span className="text-[15px] text-gray-500">Est. {careerData?.roadmap?.length || 3} phases</span>
@@ -276,7 +294,7 @@ export default function StudentPortal() {
                                         <div className="absolute left-[23px] top-8 bottom-8 w-0.5 bg-gray-200"></div>
                                         {careerData && careerData.roadmap.map((step, i) => (
                                             <div key={i} className="relative flex gap-[16px] py-[20px]">
-                                                <div className={`relative z-10 w-4 h-4 mt-1 rounded-full ring-4 ring-white shrink-0 ${i === 0 ? 'bg-green-500' : i < careerData.roadmap.length - 1 ? 'bg-[#2563EB]' : 'bg-gray-300'}`}></div>
+                                                <div className={`relative z-10 w-4 h-4 mt-1 rounded-full ring-4 ring-[#DCD9D4] shrink-0 ${i === 0 ? 'bg-[#2563EB]' : i < careerData.roadmap.length - 1 ? 'bg-[#2563EB]' : 'bg-gray-300'}`}></div>
                                                 <div className={`flex-1 ${i === careerData.roadmap.length - 1 ? 'opacity-60' : ''}`}>
                                                     <div className="flex items-center gap-3 mb-2">
                                                         <h3 className="text-[16px] font-bold text-gray-900">Station {i + 1}: {step.title}</h3>
@@ -303,7 +321,7 @@ export default function StudentPortal() {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {careerData && careerData.gaps.map((gap, i) => (
-                                        <div key={i} className="bg-white rounded-[16px] p-6 hover:shadow-md transition-shadow">
+                                        <div key={i} className="rounded-[16px] p-6 shadow-sm hover:shadow-md transition-shadow" style={{ backgroundColor: '#DCD9D4', backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.50) 0%, rgba(0,0,0,0.50) 100%), radial-gradient(at 50% 0%, rgba(255,255,255,0.10) 0%, rgba(0,0,0,0.50) 50%)', backgroundBlendMode: 'soft-light, screen' }}>
                                             <div className="flex items-start justify-between mb-3">
                                                 <h3 className="text-[16px] font-bold text-gray-900">{gap.skill}</h3>
                                                 <span className={`px-2.5 py-1 rounded-full text-[12px] font-bold ${gap.severity === 'high' ? 'bg-red-100 text-red-700' : gap.severity === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
@@ -311,8 +329,8 @@ export default function StudentPortal() {
                                                 </span>
                                             </div>
                                             <p className="text-[14px] text-gray-500 leading-relaxed">{gap.description}</p>
-                                            <div className="mt-4 h-2 bg-gray-100 rounded-full overflow-hidden">
-                                                <div className={`h-full rounded-full score-bar ${gap.severity === 'high' ? 'bg-red-500' : gap.severity === 'medium' ? 'bg-yellow-500' : 'bg-green-500'}`} style={{ width: `${100 - getSkillPercent(gap.severity)}%`, animationDelay: `${i * 0.1}s` }}></div>
+                                            <div className="mt-4 h-2 bg-white/50 rounded-full overflow-hidden">
+                                                <div className={`h-full rounded-full ${gap.severity === 'high' ? 'bg-red-500' : gap.severity === 'medium' ? 'bg-yellow-500' : 'bg-green-500'}`} style={{ width: `${100 - getSkillPercent(gap.severity)}%` }}></div>
                                             </div>
                                         </div>
                                     ))}
@@ -322,9 +340,9 @@ export default function StudentPortal() {
                                         <h2 className="text-[20px] font-bold text-gray-900 mb-4">Recommended Courses</h2>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {careerData.courses.map((course, i) => (
-                                                <a key={i} href={course.url} target="_blank" rel="noopener noreferrer" className="bg-white rounded-[16px] p-5 hover:shadow-md transition-all border border-transparent hover:border-blue-200 block">
+                                                <a key={i} href={course.url} target="_blank" rel="noopener noreferrer" className="rounded-[16px] p-5 shadow-sm hover:shadow-md transition-all border border-white/50 block" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
                                                     <div className="flex items-start gap-3">
-                                                        <div className="bg-blue-100 p-2 rounded-lg text-[#2563EB] shrink-0">
+                                                        <div className="bg-white/40 p-2 rounded-lg text-blue-600 shrink-0">
                                                             <span className="material-symbols-outlined text-xl">play_circle</span>
                                                         </div>
                                                         <div className="flex-1">
@@ -358,11 +376,11 @@ export default function StudentPortal() {
                                     { title: `${role}`, co: 'Flipkart', pkg: '₹16 LPA', match: matchPercent - 15, loc: 'Bangalore', type: 'Full-time' },
                                     { title: `${role} (Contract)`, co: 'Razorpay', pkg: '₹14 LPA', match: matchPercent - 20, loc: 'Remote', type: 'Contract' },
                                 ].map((job, i) => (
-                                    <div key={i} className="bg-white rounded-[16px] p-6 mb-4 hover:shadow-md transition-shadow">
+                                    <div key={i} className="rounded-[16px] p-6 mb-4 shadow-sm hover:shadow-md transition-shadow" style={{ backgroundColor: '#DCD9D4', backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.50) 0%, rgba(0,0,0,0.50) 100%), radial-gradient(at 50% 0%, rgba(255,255,255,0.10) 0%, rgba(0,0,0,0.50) 50%)', backgroundBlendMode: 'soft-light, screen' }}>
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-4">
-                                                <div className="bg-blue-50 w-12 h-12 rounded-xl flex items-center justify-center">
-                                                    <span className="material-symbols-outlined text-[#2563EB]">work</span>
+                                                <div className="bg-white/40 w-12 h-12 rounded-xl flex items-center justify-center">
+                                                    <span className="material-symbols-outlined text-blue-600">work</span>
                                                 </div>
                                                 <div>
                                                     <h3 className="text-[16px] font-bold text-gray-900">{job.title}</h3>
@@ -374,7 +392,7 @@ export default function StudentPortal() {
                                                     <p className="text-[16px] font-bold text-gray-900">{job.pkg}</p>
                                                     <p className="text-[13px] text-green-600 font-medium">{job.match}% match</p>
                                                 </div>
-                                                <button className="bg-[#2563EB] hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[14px] font-semibold transition-colors">
+                                                <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[14px] font-semibold transition-colors">
                                                     Apply
                                                 </button>
                                             </div>
@@ -384,69 +402,78 @@ export default function StudentPortal() {
                             </>
                         )}
 
+                        {/* ===== READINESS TAB ===== */}
+                        {activeTab === 'readiness' && <ReadinessDetails data={mockReadinessData} />}
+
+                        {/* ===== COURSES TAB ===== */}
+                        {activeTab === 'courses' && <CourseLibrary courses={mockCourseLibrary} />}
+
+                        {/* ===== APPLICATIONS TAB ===== */}
+                        {activeTab === 'applications' && <ApplicationTracker applications={mockApplications} />}
+
                     </div>
                 </main>
 
                 {/* RIGHT SIDEBAR */}
                 <aside className="w-[300px] shrink-0 mt-[32px] mr-[24px] mb-[32px]">
-                    <div className="bg-white rounded-[16px] p-[28px] h-full overflow-y-auto">
+                    <div className="rounded-[16px] p-[28px] h-full overflow-y-auto border border-white/40 shadow-sm" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
                         <h3 className="text-[15px] font-bold text-gray-900 mb-6">Suggested Next Steps</h3>
                         <div className="space-y-4">
                             {careerData && careerData.courses?.slice(0, 2).map((course, i) => (
-                                <a key={i} href={course.url} target="_blank" rel="noopener noreferrer" className="bg-gray-50 hover:bg-gray-100 p-4 rounded-xl border border-gray-100 cursor-pointer block transition-colors">
+                                <a key={i} href={course.url} target="_blank" rel="noopener noreferrer" className="group p-4 rounded-xl shadow-sm transition-all cursor-pointer hover:opacity-90 border border-white/50 block" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
                                     <div className="flex items-start gap-3 mb-3">
-                                        <div className={`${i === 0 ? 'bg-orange-100 text-orange-600' : 'bg-purple-100 text-purple-600'} p-2 rounded-lg shrink-0`}>
+                                        <div className="bg-white/40 p-2 rounded-lg text-gray-900 shrink-0">
                                             <span className="material-symbols-outlined text-xl">{i === 0 ? 'book' : 'code_blocks'}</span>
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-[15px] text-gray-900 leading-tight mb-1">{course.title}</h4>
-                                            <p className="text-[13px] text-gray-500">{course.platform} • {course.instructor}</p>
+                                            <p className="text-[13px] text-gray-700">{course.platform} • {course.instructor}</p>
                                         </div>
                                     </div>
-                                    <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
-                                        <div className={`${i === 0 ? 'bg-orange-500' : 'bg-purple-500'} h-full`} style={{ width: `${(i + 1) * 25}%` }}></div>
+                                    <div className="w-full bg-black/10 h-1.5 rounded-full overflow-hidden">
+                                        <div className="bg-blue-600 h-full" style={{ width: `${(i + 1) * 25}%` }}></div>
                                     </div>
                                 </a>
                             ))}
                             {(!careerData || !careerData.courses) && (
                                 <>
-                                    <div className="bg-gray-50 hover:bg-gray-100 p-4 rounded-xl border border-gray-100 cursor-pointer">
+                                    <div className="group p-4 rounded-xl shadow-sm transition-all cursor-pointer hover:opacity-90 border border-white/50" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
                                         <div className="flex items-start gap-3 mb-3">
-                                            <div className="bg-orange-100 p-2 rounded-lg text-orange-600 shrink-0">
+                                            <div className="bg-white/40 p-2 rounded-lg text-gray-900 shrink-0">
                                                 <span className="material-symbols-outlined text-xl">book</span>
                                             </div>
                                             <div>
                                                 <h4 className="font-bold text-[15px] text-gray-900 leading-tight mb-1">Read &quot;Designing Data-Intensive Apps&quot;</h4>
-                                                <p className="text-[13px] text-gray-500">Chapter 4: Encoding</p>
+                                                <p className="text-[13px] text-gray-700">Chapter 4: Encoding</p>
                                             </div>
                                         </div>
-                                        <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden"><div className="bg-orange-500 h-full w-1/4"></div></div>
+                                        <div className="w-full bg-black/10 h-1.5 rounded-full overflow-hidden"><div className="bg-blue-600 h-full w-1/4"></div></div>
                                     </div>
-                                    <div className="bg-gray-50 hover:bg-gray-100 p-4 rounded-xl border border-gray-100 cursor-pointer">
+                                    <div className="group p-4 rounded-xl shadow-sm transition-all cursor-pointer hover:opacity-90 border border-white/50" style={{ backgroundImage: 'linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%)' }}>
                                         <div className="flex items-start gap-3 mb-3">
-                                            <div className="bg-purple-100 p-2 rounded-lg text-purple-600 shrink-0">
+                                            <div className="bg-white/40 p-2 rounded-lg text-gray-900 shrink-0">
                                                 <span className="material-symbols-outlined text-xl">code_blocks</span>
                                             </div>
                                             <div>
                                                 <h4 className="font-bold text-[15px] text-gray-900 leading-tight mb-1">LeetCode Daily Challenge</h4>
-                                                <p className="text-[13px] text-gray-500">Medium • Array</p>
+                                                <p className="text-[13px] text-gray-700">Medium • Array</p>
                                             </div>
                                         </div>
                                         <div className="flex justify-end">
-                                            <span className="text-[13px] font-bold text-[#2563EB] bg-blue-50 px-2.5 py-1 rounded-md">Start Now</span>
+                                            <span className="text-[13px] font-bold text-gray-900 bg-white/40 px-2.5 py-1 rounded-md">Start Now</span>
                                         </div>
                                     </div>
                                 </>
                             )}
                         </div>
-                        <div className="mt-8 pt-6 border-t border-gray-100">
+                        <div className="mt-8 pt-6 border-t border-white/40">
                             <h3 className="text-[15px] font-bold text-gray-900 mb-4">Weekly Activity</h3>
                             <div className="grid grid-cols-7 gap-1.5">
-                                {['bg-green-200', 'bg-green-400', 'bg-gray-100', 'bg-green-500', 'bg-green-300', 'bg-gray-100', 'bg-gray-100'].map((c, i) => (
+                                {['bg-green-500/60', 'bg-green-500', 'bg-white/40', 'bg-green-600', 'bg-green-500/80', 'bg-white/40', 'bg-white/40'].map((c, i) => (
                                     <div key={i} className={`h-10 w-full rounded ${c} hover:ring-2 hover:ring-blue-300 cursor-pointer transition-all`} title={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i]}></div>
                                 ))}
                             </div>
-                            <div className="flex justify-between mt-2 text-[13px] text-gray-500">
+                            <div className="flex justify-between mt-2 text-[13px] text-gray-600">
                                 <span>Mon</span><span>Sun</span>
                             </div>
                         </div>
