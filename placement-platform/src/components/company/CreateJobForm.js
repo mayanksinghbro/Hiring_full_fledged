@@ -1,6 +1,5 @@
 'use client';
 
-import { Briefcase, FileText, Plus, Upload, X, Zap, Tag } from 'lucide-react';
 import { useState } from 'react';
 
 export default function CreateJobForm({ onAnalyze }) {
@@ -38,83 +37,50 @@ export default function CreateJobForm({ onAnalyze }) {
 
     const simulateFileUpload = () => {
         const mockFiles = [
-            'resume_ankit_sharma.pdf',
-            'resume_priya_verma.pdf',
-            'resume_rahul_gupta.pdf',
-            'resume_sneha_reddy.pdf',
-            'resume_vikram_singh.pdf',
-            'resume_deepika_jain.pdf',
-            'resume_arjun_nair.pdf',
-            'resume_kavya_menon.pdf',
+            'resume_ankit_sharma.pdf', 'resume_priya_verma.pdf', 'resume_rahul_gupta.pdf',
+            'resume_sneha_reddy.pdf', 'resume_vikram_singh.pdf', 'resume_deepika_jain.pdf',
+            'resume_arjun_nair.pdf', 'resume_kavya_menon.pdf',
         ];
         setFiles(mockFiles);
     };
 
     return (
-        <div className="glass-card p-6 fade-in-up">
-            {/* Header */}
+        <div className="bg-white rounded-[16px] p-6">
             <div className="flex items-center gap-3 mb-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20">
-                    <Briefcase className="h-5 w-5 text-white" />
+                <div className="bg-blue-100 p-2.5 rounded-xl">
+                    <span className="material-symbols-outlined text-[#2563EB] text-xl">work</span>
                 </div>
                 <div>
-                    <h2 className="text-xl font-bold text-slate-100">Create Job Posting</h2>
-                    <p className="text-sm text-slate-500">Define the role and upload candidate resumes</p>
+                    <h2 className="text-[18px] font-bold text-gray-900">Create Job Posting</h2>
+                    <p className="text-[13px] text-gray-500">Define the role and upload candidate resumes</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left: Form */}
                 <div className="space-y-5">
-                    {/* Job Title */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Job Title</label>
-                        <input
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder="e.g. Senior Frontend Developer"
-                            className="input-field"
-                        />
+                        <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Job Title</label>
+                        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Senior Frontend Developer" className="input-field" />
                     </div>
-
-                    {/* Description */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Job Description</label>
-                        <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Describe the role, responsibilities, and requirements..."
-                            className="input-field"
-                            rows={4}
-                        />
+                        <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Job Description</label>
+                        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the role, responsibilities, and requirements..." className="input-field" rows={4} />
                     </div>
-
-                    {/* Competencies */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Expected Competencies</label>
+                        <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Expected Competencies</label>
                         <div className="flex gap-2">
-                            <input
-                                type="text"
-                                value={competency}
-                                onChange={(e) => setCompetency(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder="e.g. React, TypeScript, System Design..."
-                                className="input-field flex-1"
-                            />
+                            <input type="text" value={competency} onChange={(e) => setCompetency(e.target.value)} onKeyDown={handleKeyDown} placeholder="e.g. React, TypeScript..." className="input-field flex-1" />
                             <button onClick={addCompetency} className="btn-secondary flex items-center gap-1">
-                                <Plus className="h-4 w-4" />
-                                Add
+                                <span className="material-symbols-outlined text-[16px]">add</span>Add
                             </button>
                         </div>
                         {competencies.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-3">
                                 {competencies.map((c) => (
-                                    <span key={c} className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-300 border border-indigo-500/20">
-                                        <Tag className="h-3 w-3" />
+                                    <span key={c} className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-[13px] font-medium text-[#2563EB] border border-blue-200">
                                         {c}
-                                        <button onClick={() => removeCompetency(c)} className="ml-1 hover:text-red-400 transition-colors">
-                                            <X className="h-3 w-3" />
+                                        <button onClick={() => removeCompetency(c)} className="ml-1 hover:text-red-500 transition-colors">
+                                            <span className="material-symbols-outlined text-[14px]">close</span>
                                         </button>
                                     </span>
                                 ))}
@@ -123,42 +89,35 @@ export default function CreateJobForm({ onAnalyze }) {
                     </div>
                 </div>
 
-                {/* Right: File Upload */}
                 <div className="space-y-4">
-                    <label className="block text-sm font-medium text-slate-400 mb-1.5">Upload Resumes (PDF)</label>
+                    <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Upload Resumes (PDF)</label>
                     <div
-                        className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${dragOver
-                            ? 'border-indigo-500 bg-indigo-500/5'
-                            : 'border-slate-700 hover:border-slate-600 hover:bg-slate-800/30'
-                            }`}
+                        className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer ${dragOver ? 'border-[#2563EB] bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                         onDragLeave={() => setDragOver(false)}
                         onDrop={handleFileDrop}
                         onClick={simulateFileUpload}
                     >
                         <div className="flex flex-col items-center gap-3">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
-                                <Upload className="h-7 w-7 text-indigo-400" />
+                            <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                                <span className="material-symbols-outlined text-[#2563EB] text-3xl">upload_file</span>
                             </div>
                             <div>
-                                <p className="font-semibold text-slate-300">Drop PDF resumes here</p>
-                                <p className="text-sm text-slate-500 mt-1">or click to upload (simulated)</p>
+                                <p className="font-semibold text-gray-700">Drop PDF resumes here</p>
+                                <p className="text-[13px] text-gray-400 mt-1">or click to upload (simulated)</p>
                             </div>
                         </div>
                     </div>
 
-                    {/* File List */}
                     {files.length > 0 && (
                         <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                                {files.length} files uploaded
-                            </p>
+                            <p className="text-[12px] font-medium text-gray-400 uppercase tracking-wider">{files.length} files uploaded</p>
                             {files.map((file, i) => (
-                                <div key={i} className="flex items-center gap-3 rounded-lg bg-slate-800/50 px-3 py-2 border border-slate-700/30">
-                                    <FileText className="h-4 w-4 text-indigo-400 shrink-0" />
-                                    <span className="text-sm text-slate-300 truncate flex-1">{file}</span>
-                                    <button onClick={() => setFiles(files.filter((_, idx) => idx !== i))} className="text-slate-600 hover:text-red-400 transition-colors">
-                                        <X className="h-3.5 w-3.5" />
+                                <div key={i} className="flex items-center gap-3 rounded-lg bg-gray-50 px-3 py-2 border border-gray-100">
+                                    <span className="material-symbols-outlined text-[#2563EB] text-[18px]">description</span>
+                                    <span className="text-[13px] text-gray-700 truncate flex-1">{file}</span>
+                                    <button onClick={() => setFiles(files.filter((_, idx) => idx !== i))} className="text-gray-400 hover:text-red-500 transition-colors">
+                                        <span className="material-symbols-outlined text-[16px]">close</span>
                                     </button>
                                 </div>
                             ))}
@@ -167,15 +126,14 @@ export default function CreateJobForm({ onAnalyze }) {
                 </div>
             </div>
 
-            {/* Analyze Button */}
             <div className="mt-8 flex justify-center">
                 <button
                     onClick={() => onAnalyze({ title: title || 'Senior Frontend Developer', description, competencies, files })}
-                    className="btn-primary flex items-center gap-2 text-base px-8 py-3"
+                    className="btn-primary flex items-center gap-2 text-[15px] px-8 py-3"
                     disabled={files.length === 0}
                     style={{ opacity: files.length === 0 ? 0.5 : 1 }}
                 >
-                    <Zap className="h-5 w-5" />
+                    <span className="material-symbols-outlined text-[20px]">smart_toy</span>
                     Analyze Fit with AI
                 </button>
             </div>

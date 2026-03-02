@@ -18,6 +18,10 @@ export default function Navbar() {
 
     if (isAuthPage) return null; // Hide navbar on login/signup pages for a cleaner look
 
+    if (pathname.startsWith('/student')) {
+        return null;
+    }
+
     return (
         <nav className="sticky top-0 z-40 border-b border-slate-800/60 bg-slate-900/80 backdrop-blur-xl">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
