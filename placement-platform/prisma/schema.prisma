@@ -297,3 +297,29 @@ model Course {
   category      String?     // skill gap area
   ratingsCount  Int?        @default(0)
 }
+
+// ─────────────────────────────────────────────────────────────
+// TRUSTOFFER — Blockchain-Verified Job Offers (EIP-712 Signed)
+// ─────────────────────────────────────────────────────────────
+
+model TrustOffer {
+  id               String   @id @default(cuid())
+  companyName      String
+  candidateName    String
+  roleTitle        String
+  packageLPA       Float
+  status           String   @default("Pending")   // Pending | Accepted | Rescinded
+
+  // Cryptographic attestation data
+  attestationUID   String   @unique
+  attestationSig   String   @db.Text
+  attestationData  Json
+  signerAddress    String
+
+  // Status change history
+  acceptedAt       DateTime?
+  rescindedAt      DateTime?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}

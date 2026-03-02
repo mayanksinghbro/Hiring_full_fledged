@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
+    "@ethereum-attestation-service/eas-sdk": "^2.9.0",
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^3.0.3",
+    "ethers": "^6.16.0",
     "lucide-react": "^0.575.0",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",

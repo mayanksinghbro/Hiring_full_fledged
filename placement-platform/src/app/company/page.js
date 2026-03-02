@@ -5,6 +5,8 @@ import CreateJobForm from '@/components/company/CreateJobForm';
 import CandidateLeaderboard from '@/components/company/CandidateLeaderboard';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { mockResumeTexts } from '@/data/mockResumes';
+import ReputationBadge from '@/components/blockchain/ReputationBadge';
+import CreateOfferModal from '@/components/blockchain/CreateOfferModal';
 
 // Shared job store (simulates DB — all portals read from this)
 const sharedJobStore = {
@@ -29,6 +31,11 @@ export default function CompanyPortal() {
     const [hiredCandidates, setHiredCandidates] = useState([]);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [rightPanelOpen, setRightPanelOpen] = useState(false);
+    const [offerCandidate, setOfferCandidate] = useState(null);
+    const [refreshKey, setRefreshKey] = useState(0);
+    const [rescindingId, setRescindingId] = useState(null);
+
+    const COMPANY_NAME = 'Acme Corp';
 
     useEffect(() => {
         // Load any previously posted jobs
@@ -96,6 +103,23 @@ export default function CompanyPortal() {
         setHiredCandidates(prev => [...prev, { ...candidate, hiredAt: new Date().toISOString(), jobTitle }]);
     };
 
+    const handleRescind = async (candidate) => {
+        if (!candidate.dbId) return;
+        setRescindingId(candidate.dbId);
+        try {
+            const res = await fetch(`/api/trustoffer/${candidate.dbId}/rescind`, { method: 'PATCH' });
+            if (res.ok) {
+                // Remove from active hired candidates list for demo purposes
+                setHiredCandidates(prev => prev.filter(c => c.dbId !== candidate.dbId));
+                setRefreshKey(prev => prev + 1); // Force reputation refresh
+            }
+        } catch (err) {
+            console.error('Failed to rescind:', err);
+        } finally {
+            setRescindingId(null);
+        }
+    };
+
     const stats = [
         { label: 'Active Postings', value: String(postedJobs.filter(j => j.status === 'active').length || 3), icon: 'work', color: 'bg-blue-100 text-blue-600' },
         { label: 'Resumes Analyzed', value: String(postedJobs.reduce((sum, j) => sum + j.resumeCount, 0) || 247), icon: 'description', color: 'bg-purple-100 text-purple-600' },
@@ -127,6 +151,7 @@ export default function CompanyPortal() {
                     </nav>
                 </div>
                 <div className="flex items-center gap-4">
+                    <ReputationBadge companyName={COMPANY_NAME} refreshKey={refreshKey} />
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/20 rounded-full border border-green-500/30">
                         <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
                         <span className="text-[13px] font-medium text-green-400">AI Online</span>
@@ -203,7 +228,7 @@ export default function CompanyPortal() {
                                 {analyzing && <div className="mt-8"><LoadingSpinner text="Analyzing Resumes with Gemini AI" /></div>}
 
                                 {showLeaderboard && !analyzing && candidates.length > 0 && (
-                                    <div className="mt-8"><CandidateLeaderboard candidates={candidates} jobTitle={jobTitle} resumeTexts={mockResumeTexts} onHire={handleHire} /></div>
+                                    <div className="mt-8"><CandidateLeaderboard candidates={candidates} jobTitle={jobTitle} resumeTexts={mockResumeTexts} onHire={handleHire} onOffer={(candidate) => setOfferCandidate(candidate)} /></div>
                                 )}
                             </>
                         )}
@@ -304,27 +329,80 @@ export default function CompanyPortal() {
                         <h3 className="text-[15px] font-bold text-gray-900">Recent Activity</h3>
                         <button onClick={() => setRightPanelOpen(false)} className="p-1 hover:bg-white/40 rounded-lg transition-colors"><span className="material-symbols-outlined text-gray-600">close</span></button>
                     </div>
-                    <div className="space-y-4">
-                        {(hiredCandidates.length > 0 ? hiredCandidates.slice(0, 2).map((c, i) => ({ text: `${c.id} hired for ${c.jobTitle}`, time: 'Just now', icon: 'handshake', color: 'bg-green-100 text-green-600' })) : []).concat([
-                            { text: 'Resume batch uploaded', time: '2 min ago', icon: 'upload_file', color: 'bg-blue-100 text-blue-600' },
-                            { text: 'AI analysis completed', time: '15 min ago', icon: 'smart_toy', color: 'bg-purple-100 text-purple-600' },
-                            { text: '3 candidates shortlisted', time: '1 hour ago', icon: 'how_to_reg', color: 'bg-green-100 text-green-600' },
-                        ]).slice(0, 4).map((item, i) => (
-                            <div key={i} className="flex items-start gap-3">
-                                <div className={`${item.color} p-2 rounded-lg shrink-0`}><span className="material-symbols-outlined text-[18px]">{item.icon}</span></div>
-                                <div><p className="text-[14px] text-gray-800 font-medium">{item.text}</p><p className="text-[12px] text-gray-400">{item.time}</p></div>
+                </div>
+                <div className="mt-2 space-y-4">
+                    {hiredCandidates.length > 0 && (
+                        <div className="mb-6">
+                            <h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-3">Active Verified Offers</h4>
+                            <div className="space-y-3">
+                                {hiredCandidates.map((c, i) => (
+                                    <div key={i} className="p-3 bg-white rounded-xl border border-gray-100 shadow-sm relative overflow-hidden group">
+                                        <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+                                        <div className="pl-2">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <p className="text-[13px] font-bold text-gray-900">{c.id}</p>
+                                                <span className="text-[10px] text-gray-400">{new Date(c.hiredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                            <p className="text-[12px] text-gray-600 mb-2 truncate">Offered: {c.jobTitle}</p>
+                                            <p className="text-[11px] text-indigo-500 font-mono mb-3 truncate flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[12px]">fingerprint</span>
+                                                {c.attestationUID}
+                                            </p>
+                                            <button
+                                                onClick={() => handleRescind(c)}
+                                                disabled={rescindingId === c.dbId}
+                                                className="w-full py-1.5 rounded-md text-[11px] font-bold text-red-600 bg-red-50 border border-red-100 hover:bg-red-100 transition-colors flex items-center justify-center gap-1"
+                                            >
+                                                {rescindingId === c.dbId ? (
+                                                    <><div className="h-3 w-3 rounded-full border border-red-600 border-t-transparent animate-spin"></div> Rescinding...</>
+                                                ) : (
+                                                    <><span className="material-symbols-outlined text-[14px]">cancel</span> Rescind Offer (Demo Trust Drop)</>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                    <div className="mt-8 pt-6 border-t border-white/40">
-                        <h3 className="text-[15px] font-bold text-gray-900 mb-3">Quick Stats</h3>
-                        <div className="space-y-3">
-                            <div><div className="flex justify-between text-[13px] mb-1"><span className="text-gray-600">Avg Match Score</span><span className="font-bold text-gray-900">84%</span></div><div className="h-2 bg-black/10 rounded-full overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: '84%' }}></div></div></div>
-                            <div><div className="flex justify-between text-[13px] mb-1"><span className="text-gray-600">Response Rate</span><span className="font-bold text-gray-900">92%</span></div><div className="h-2 bg-black/10 rounded-full overflow-hidden"><div className="h-full bg-green-500 rounded-full" style={{ width: '92%' }}></div></div></div>
                         </div>
+                    )}
+                    <h4 className="text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-3">History</h4>
+                    {[
+                        { text: 'Resume batch uploaded', time: '2 min ago', icon: 'upload_file', color: 'bg-blue-100 text-blue-600' },
+                        { text: 'AI analysis completed', time: '15 min ago', icon: 'smart_toy', color: 'bg-purple-100 text-purple-600' },
+                        { text: '3 candidates shortlisted', time: '1 hour ago', icon: 'how_to_reg', color: 'bg-green-100 text-green-600' },
+                    ].map((item, i) => (
+                        <div key={i} className="flex items-start gap-3">
+                            <div className={`${item.color} p-2 rounded-lg shrink-0`}><span className="material-symbols-outlined text-[18px]">{item.icon}</span></div>
+                            <div><p className="text-[14px] text-gray-800 font-medium">{item.text}</p><p className="text-[12px] text-gray-400">{item.time}</p></div>
+                        </div>
+                    ))}
+                </div>
+                <div className="mt-8 pt-6 border-t border-white/40">
+                    <h3 className="text-[15px] font-bold text-gray-900 mb-3">Quick Stats</h3>
+                    <div className="space-y-3">
+                        <div><div className="flex justify-between text-[13px] mb-1"><span className="text-gray-600">Avg Match Score</span><span className="font-bold text-gray-900">84%</span></div><div className="h-2 bg-black/10 rounded-full overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{ width: '84%' }}></div></div></div>
+                        <div><div className="flex justify-between text-[13px] mb-1"><span className="text-gray-600">Response Rate</span><span className="font-bold text-gray-900">92%</span></div><div className="h-2 bg-black/10 rounded-full overflow-hidden"><div className="h-full bg-green-500 rounded-full" style={{ width: '92%' }}></div></div></div>
                     </div>
                 </div>
             </aside>
+
+            {/* TrustOffer Modal */}
+            <CreateOfferModal
+                isOpen={!!offerCandidate}
+                onClose={() => setOfferCandidate(null)}
+                candidate={offerCandidate}
+                jobTitle={jobTitle || 'Software Engineer'}
+                companyName={COMPANY_NAME}
+                onSuccess={(offer) => {
+                    setHiredCandidates(prev => [...prev, {
+                        ...offerCandidate,
+                        hiredAt: new Date().toISOString(),
+                        jobTitle,
+                        attestationUID: offer.attestationUID,
+                        dbId: offer.id
+                    }]);
+                }}
+            />
         </div>
     );
 }
