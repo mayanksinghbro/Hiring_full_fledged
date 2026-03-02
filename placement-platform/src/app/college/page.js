@@ -1,5 +1,3 @@
-'use client';
-
 import { School, BarChart3, LineChart } from 'lucide-react';
 import BatchAnalytics from '@/components/college/BatchAnalytics';
 import CompanyMapping from '@/components/college/CompanyMapping';
@@ -17,7 +15,7 @@ export default function CollegePortal() {
                 <p className="text-slate-500 text-lg">Macro-level batch analytics and AI-powered company-student mapping</p>
             </div>
 
-            {/* Batch Analytics */}
+            {/* Batch Analytics - Now fetching real data from Neon! */}
             <BatchAnalytics />
 
             {/* Charts */}
