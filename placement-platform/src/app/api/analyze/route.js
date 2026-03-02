@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
 const SYSTEM_PROMPT = `System Role:
@@ -34,6 +34,7 @@ Rules:
 - Write a professional but warm shortlisting email.
 - Include: [CANDIDATE_NAME], [ROLE], [COMPANY], [LINK_PLACEHOLDER] as editable tokens.
 - Keep tone encouraging but professional. Max 150 words. Do not fabricate interview details.
+- CRITICAL: You MUST escape all newlines as \\n. DO NOT use literal newlines anywhere in the JSON string output.
 
 === SKILL 5: hallucination_guard ===
 Purpose: Validation layer after all generated output.
@@ -49,7 +50,7 @@ You must output your analysis in the following strict JSON format:
   "critical_missing_skills": ["<Required JD skill NOT found in resume>", "..."],
   "relevant_projects": ["<Detailed explanation of candidate's project and why it fits JD>", "..."],
   "justification_bullets": ["✅ <Strength 1...>", "✅ <Strength 2...>", "✅ <Strength 3...>", "❌ <Gap...>"],
-  "email_draft": "<Plain text email body mapped to the skill 4 rules>",
+  "email_draft": "<Plain text email body mapped to the skill 4 rules. Escape newlines as \\n>",
   "hallucination_guard": {
       "hallucinated_claims": ["claim 1", "..."],
       "confidence": "high",
@@ -142,8 +143,7 @@ async function analyzeWithRetry(model, jobDescription, resume, index, competenci
 
             let analysis;
             try {
-                const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-                analysis = JSON.parse(jsonMatch ? jsonMatch[0] : responseText);
+                analysis = JSON.parse(responseText);
             } catch (parseErr) {
                 console.error(`[PARSE ERROR] Resume ${index}, attempt ${attempt}:`, parseErr.message);
                 console.error(`[RAW STRING EXCERPT]`, responseText.slice(-200));
@@ -250,6 +250,36 @@ export async function POST(request) {
                 topP: 0.8,
                 maxOutputTokens: 2048,
                 responseMimeType: 'application/json',
+                responseSchema: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                        match_score_out_of_100: { type: SchemaType.INTEGER },
+                        key_strengths: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+                        critical_missing_skills: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+                        relevant_projects: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+                        relevant_experience: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+                        justification_bullets: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+                        email_draft: { type: SchemaType.STRING },
+                        hallucination_guard: {
+                            type: SchemaType.OBJECT,
+                            properties: {
+                                hallucinated_claims: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING } },
+                                confidence: { type: SchemaType.STRING },
+                                safe_to_use: { type: SchemaType.BOOLEAN }
+                            },
+                        },
+                    },
+                    required: [
+                        "match_score_out_of_100",
+                        "key_strengths",
+                        "critical_missing_skills",
+                        "relevant_projects",
+                        "relevant_experience",
+                        "justification_bullets",
+                        "email_draft",
+                        "hallucination_guard"
+                    ]
+                }
             },
         });
 
