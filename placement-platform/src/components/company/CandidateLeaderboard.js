@@ -53,13 +53,13 @@ export default function CandidateLeaderboard({ candidates, jobTitle, resumeTexts
                     <table className="w-full">
                         <thead>
                             <tr className="border-b border-gray-100">
-                                <th className="pb-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-400 w-14">Rank</th>
-                                <th className="pb-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-400 w-28">Candidate</th>
-                                <th className="pb-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-400 w-40">Match Score</th>
-                                <th className="pb-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-400">AI Justification</th>
+                                <th className="pb-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-400 w-12">Rank</th>
+                                <th className="pb-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-400 w-48">Candidate</th>
+                                <th className="pb-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-400 w-32">Match Score</th>
+                                <th className="pb-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-400 w-72">AI Justification</th>
                                 <th className="pb-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-400 w-48">Key Strengths</th>
                                 <th className="pb-3 text-left text-[12px] font-semibold uppercase tracking-wider text-gray-400 w-48">Missing Skills</th>
-                                <th className="pb-3 text-right text-[12px] font-semibold uppercase tracking-wider text-gray-400 w-36">Actions</th>
+                                <th className="pb-3 text-right text-[12px] font-semibold uppercase tracking-wider text-gray-400 w-40">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -69,6 +69,7 @@ export default function CandidateLeaderboard({ candidates, jobTitle, resumeTexts
                                 const missingSkills = candidate.criticalMissingSkills || [];
                                 const relevantProjects = candidate.relevantProjects || [];
                                 const relevantExperience = candidate.relevantExperience || [];
+                                const candidateName = candidate.fileName ? candidate.fileName.split('.')[0].replace(/[-_]/g, ' ') : 'Unknown Candidate';
                                 return (
                                     <tr key={candidate.id} className="group hover:bg-gray-50 transition-colors">
                                         <td className="py-4">
@@ -81,11 +82,14 @@ export default function CandidateLeaderboard({ candidates, jobTitle, resumeTexts
                                             </div>
                                         </td>
                                         <td className="py-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className={`flex h-9 w-9 items-center justify-center rounded-xl text-[12px] font-bold ${rank <= 3 ? 'bg-blue-50 text-[#2563EB] border border-blue-200' : 'bg-gray-50 text-gray-500 border border-gray-200'}`}>
-                                                    {candidate.id.slice(-2)}
+                                            <div className="flex items-center gap-3">
+                                                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[14px] font-bold ${rank <= 3 ? 'bg-blue-50 text-[#2563EB] border border-blue-200' : 'bg-gray-50 text-gray-500 border border-gray-200'}`}>
+                                                    {candidateName.charAt(0).toUpperCase()}
                                                 </div>
-                                                <span className="font-semibold text-gray-800 text-[13px]">{candidate.id}</span>
+                                                <div className="flex flex-col">
+                                                    <span className="font-semibold text-gray-900 text-[13px] line-clamp-1 capitalize">{candidateName}</span>
+                                                    <span className="text-gray-400 text-[11px] font-mono mt-0.5">{candidate.id}</span>
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="py-4">
@@ -96,9 +100,19 @@ export default function CandidateLeaderboard({ candidates, jobTitle, resumeTexts
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="py-4">
+                                        <td className="py-4 pr-6">
                                             <div className="flex flex-col gap-2">
-                                                <p className="text-[12px] text-gray-700 leading-relaxed max-w-sm">{candidate.justification}</p>
+                                                <ul className="text-[12px] text-gray-700 leading-relaxed max-w-sm space-y-1.5">
+                                                    {candidate.justification_bullets ? (
+                                                        candidate.justification_bullets.map((bullet, i) => (
+                                                            <li key={i} className="flex items-start">
+                                                                <span>{bullet}</span>
+                                                            </li>
+                                                        ))
+                                                    ) : (
+                                                        <p>{candidate.justification || 'No justification provided.'}</p>
+                                                    )}
+                                                </ul>
                                                 {(relevantProjects.length > 0 || relevantExperience.length > 0) && (
                                                     <div className="flex flex-col gap-1.5 mt-1 border-t border-gray-100 pt-2">
                                                         {relevantExperience.length > 0 && (
@@ -139,8 +153,15 @@ export default function CandidateLeaderboard({ candidates, jobTitle, resumeTexts
                                         </td>
                                         <td className="py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => setViewCandidate(candidate)} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition-colors">
-                                                    <span className="material-symbols-outlined text-[14px]">description</span>Resume
+                                                <button
+                                                    onClick={() => candidate.fileName && setViewCandidate(candidate)}
+                                                    disabled={!candidate.fileName}
+                                                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold transition-colors ${candidate.fileName ? 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100' : 'bg-gray-50 text-gray-400 border border-gray-100 cursor-not-allowed'}`}
+                                                >
+                                                    <span className="material-symbols-outlined text-[14px]">
+                                                        {candidate.fileName ? 'description' : 'visibility_off'}
+                                                    </span>
+                                                    {candidate.fileName ? 'Resume' : 'Unavailable'}
                                                 </button>
                                                 <button
                                                     onClick={() => handleShortlist(candidate)}

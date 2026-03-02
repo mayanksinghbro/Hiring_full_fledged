@@ -32,7 +32,7 @@ We look forward to speaking with you!
 
 Best regards,
 Hiring Team
-Powered by Placify AI`,
+Powered by NextHire AI`,
     };
 
     return (

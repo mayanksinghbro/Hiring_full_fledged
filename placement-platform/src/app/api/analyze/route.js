@@ -2,21 +2,17 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
 const SYSTEM_PROMPT = `System Role:
-You are an elite, highly critical Technical Recruiter and HR Data Analyst. Your job is to evaluate a candidate's resume strictly against a specific Job Description (JD).
+You are an elite, highly critical Technical Recruiter and HR Data Analyst. Your job is to strictly evaluate a candidate's resume strictly against a specific Job Description (JD).
 
 Instructions:
 
-1. You will be provided with a complete Job Description (title, description, and required competencies) and a Candidate Resume.
+1. You will be provided with a complete Job Description (title, description, and required competencies) and Candidate Resume structured data (Specifically: Projects, Work Experience/Internships, and Skills extracted from the resume).
 
-2. You MUST deeply analyze the candidate's specific PROJECTS, INTERNSHIP/WORK EXPERIENCE, and LISTED SKILLS and compare them directly against the JD requirements.
+2. You MUST deeply analyze the candidate's specific PROJECTS, EXPERIENCE, and SKILLS to determine how accurately they map directly against the JD requirements and compute a "match_score_out_of_100".
 
-3. DO NOT give generic or vague responses. Every point you make MUST reference a specific item from the resume (e.g., "Built a real-time chat app using Socket.io" or "Interned at Google working on data pipelines") and explain how it maps (or doesn't map) to the JD requirements.
+13. The "justification_bullets" MUST be an array of up to 3 short bullet points explaining EXACTLY WHY the candidate was assigned this specific match score. Explicitly state whether their Projects, Experience, and Skills align with the requirements, or if they fall short. Start each bullet with an appropriate emoji (✅ for strengths, ❌ for missing skills, ⚠️ for warnings/weaknesses). DO NOT give generic or vague responses. Cite specific skills or projects listed.
 
-4. For critical_missing_skills: ONLY list skills/technologies that are EXPLICITLY written in the JD's Required Competencies or job description text. Do NOT invent, infer, or add any skills that are not directly mentioned in the JD. If the JD says "Python, React" then the ONLY possible missing skills are Python and React — nothing else.
-
-5. For relevant_projects and relevant_experience: pick ONLY items from the resume that are directly relevant to the JD. Include a brief reason explaining why each is relevant. If nothing is relevant, return empty arrays.
-
-6. The justification MUST be 3-4 sentences, citing specific resume items (project names, company names, technologies used) and mapping them to JD requirements. Never say things like "strong candidate" or "good fit" without citing evidence.
+4. For critical_missing_skills: ONLY list skills/technologies that are EXPLICITLY written in the JD's Required Competencies or job description text. Do NOT invent, infer, or add any skills that are not directly mentioned in the JD.
 
 Output Format (Strict JSON):
 You must output your analysis in the following strict JSON format. Do not include markdown formatting or outside text.
@@ -26,10 +22,10 @@ You must output your analysis in the following strict JSON format. Do not includ
   "critical_missing_skills": ["<Required skill/tech in JD NOT found in resume>", "..."],
   "relevant_projects": ["<Project name from resume — brief reason it's relevant to JD>", "..."],
   "relevant_experience": ["<Internship/role from resume — brief reason it's relevant to JD>", "..."],
-  "justification": "<3-4 sentences citing specific projects, internships, and skills from the resume, explaining exactly how they align or don't align with this JD's requirements.>"
+  "justification_bullets": ["<✅ Example strength...>", "<❌ Example weakness...>", "<⚠️ Example warning...>"]
 }`;
 
-function buildPrompt(jobDescription, resumeText, competencies) {
+function buildPrompt(jobDescription, resume, competencies) {
     return `Inputs:
 
 === JOB DESCRIPTION ===
@@ -40,12 +36,19 @@ ${jobDescription}
 ${competencies && competencies.length > 0 ? competencies.join(', ') : 'See job description text above'}
 === END REQUIRED COMPETENCIES ===
 
-=== CANDIDATE RESUME ===
-${resumeText}
-=== END CANDIDATE RESUME ===
+=== CANDIDATE STRUCTURED DATA ===
+Skills Detected:
+${resume.skills ? resume.skills.join('\n') : 'None'}
 
-IMPORTANT: The REQUIRED COMPETENCIES listed above are the ONLY skills you should check against. For critical_missing_skills, ONLY include items from this exact list that are NOT found in the resume. Do NOT add any other skills.
-Analyze this candidate's resume against the job description above. Focus on their specific projects, work experience, and skills. Be detailed and cite specific items from the resume.`;
+Projects:
+${resume.projects ? resume.projects.join('\n') : 'None'}
+
+Experience / Internships:
+${resume.experience ? resume.experience.join('\n') : 'None'}
+=== END CANDIDATE STRUCTURED DATA ===
+
+IMPORTANT: The REQUIRED COMPETENCIES listed above are the ONLY skills you should check against. For critical_missing_skills, ONLY include items from this exact list that are NOT found in the resume. 
+Analyze this candidate's structured data against the job description above. Explicitly explain your ranking score based on what is listed in their Projects, Experience, and Skills.`;
 }
 
 function delay(ms) {
@@ -53,7 +56,8 @@ function delay(ms) {
 }
 
 // Intelligent fallback: analyze resume text against ONLY the user-provided competencies
-function localAnalysis(jobDescription, resumeText, candidateId, competencies = []) {
+function localAnalysis(jobDescription, resume, candidateId, competencies = []) {
+    const resumeText = resume.rawText || '';
     const resumeLower = resumeText.toLowerCase();
 
     // Use ONLY the competencies the user explicitly listed — never invent skills
@@ -70,26 +74,20 @@ function localAnalysis(jobDescription, resumeText, candidateId, competencies = [
         score = 50; // No competencies provided, neutral score
     }
 
+    const projectLines = resume.projects || [];
+    const experienceLines = resume.experience || [];
+    const skillsLines = resume.skills || [];
+
     // Add some variance based on experience mentions
-    const hasInternship = resumeLower.includes('intern');
-    const hasProject = resumeLower.includes('project');
-    const hasContributions = resumeLower.includes('open source') || resumeLower.includes('contribution');
-    if (hasInternship) score = Math.min(score + 5, 98);
-    if (hasProject) score = Math.min(score + 3, 98);
-    if (hasContributions) score = Math.min(score + 3, 98);
+    if (experienceLines.length > 0) score = Math.min(score + 8, 98);
+    if (projectLines.length > 0) score = Math.min(score + 5, 98);
 
     // Clamp
     score = Math.max(20, Math.min(score, 98));
 
-    // Extract project and experience mentions from resume
-    const projectMatches = resumeText.match(/(?:PROJECTS?|PROJECT WORK)[\s\S]*?(?=SKILLS|ACHIEVEMENTS|EDUCATION|$)/i);
-    const experienceMatches = resumeText.match(/(?:EXPERIENCE|WORK EXPERIENCE|INTERNSHIP)[\s\S]*?(?=PROJECTS?|SKILLS|ACHIEVEMENTS|$)/i);
-    const projectLines = projectMatches ? projectMatches[0].split('\n').filter(l => l.trim() && !l.match(/^(PROJECTS?|PROJECT WORK)/i)).slice(0, 3).map(l => l.trim().replace(/^[•\-*]\s*/, '')) : [];
-    const experienceLines = experienceMatches ? experienceMatches[0].split('\n').filter(l => l.trim() && !l.match(/^(EXPERIENCE|WORK)/i) && l.match(/intern|engineer|developer|analyst|researcher|assistant/i)).slice(0, 2).map(l => l.trim().replace(/^[•\-*]\s*/, '')) : [];
-
     const justification = matched.length > 0
-        ? `Resume shows direct skill overlap in ${matched.slice(0, 3).join(', ')} which are listed as required competencies. ${experienceLines.length > 0 ? `Their experience (${experienceLines[0]}) provides hands-on exposure relevant to this role. ` : ''}${missing.length > 0 ? `However, the resume lacks ${missing.slice(0, 2).join(' and ')} which are explicitly required competencies.` : `${projectLines.length > 0 ? `Projects like ${projectLines[0]} demonstrate practical application of required skills.` : 'Covers all listed competencies.'}`}`
-        : `Candidate's resume does not mention any of the required competencies (${requiredSkills.slice(0, 4).join(', ')}). ${missing.length > 0 ? `Missing: ${missing.slice(0, 3).join(', ')}.` : ''}`;
+        ? `Candidate scored ${score}% because their Projects (${projectLines.length}) and Experience (${experienceLines.length}) show explicit proficiency in ${matched.slice(0, 3).join(', ')}. ${missing.length > 0 ? `However, their skills section lacks ${missing.slice(0, 2).join(' and ')}.` : `Their background covers all required competencies perfectly.`}`
+        : `Candidate ranked low (${score}%) because they lack the core technical competencies (${requiredSkills.slice(0, 4).join(', ')}) in their listed skills, projects, and experiences.`;
 
     return {
         id: candidateId,
@@ -106,7 +104,7 @@ function localAnalysis(jobDescription, resumeText, candidateId, competencies = [
 async function analyzeWithRetry(model, jobDescription, resume, index, competencies = [], maxRetries = 2) {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-            const prompt = buildPrompt(jobDescription, resume.text, competencies);
+            const prompt = buildPrompt(jobDescription, resume, competencies);
             const result = await model.generateContent(SYSTEM_PROMPT + '\n\n' + prompt);
             const responseText = result.response.text();
 
@@ -129,26 +127,49 @@ async function analyzeWithRetry(model, jobDescription, resume, index, competenci
                 criticalMissingSkills: analysis.critical_missing_skills || [],
                 relevantProjects: analysis.relevant_projects || [],
                 relevantExperience: analysis.relevant_experience || [],
-                justification: analysis.justification || 'No justification provided.',
+                justification_bullets: analysis.justification_bullets || ['⚠️ No justification provided by AI.'],
                 shortlisted: false,
                 source: 'gemini',
             };
         } catch (err) {
-            console.error(`Attempt ${attempt + 1} failed for resume ${index}:`, err.message?.slice(0, 100));
+            console.error(`Attempt ${attempt + 1} failed for resume ${index}:`, err.message?.slice(0, 150));
+
             if (attempt < maxRetries) {
-                const backoff = (attempt + 1) * 3000;
-                console.log(`Retrying in ${backoff}ms...`);
-                await delay(backoff);
+                let backoffMS = (attempt + 1) * 3000;
+
+                // If Google explicitly tells us how long to wait upon Rate Limit
+                const retryMatch = err.message?.match(/retry in (\d+\.?\d*)s/i);
+                if (retryMatch && retryMatch[1]) {
+                    backoffMS = (parseFloat(retryMatch[1]) + 1) * 1000; // sleep that exact amount of time + 1s padding
+                    console.log(`Rate limit detected! Sleeping explicitly for ${backoffMS}ms before retrying...`);
+                } else if (err.message?.includes('429') || err.message?.includes('quota')) {
+                    backoffMS = 35000; // default long sleep if it's a 429 without explicit time
+                    console.log(`429 Quota Exceeded detected. Sleeping for ${backoffMS}ms...`);
+                }
+
+                console.log(`Retrying in ${backoffMS}ms...`);
+                await delay(backoffMS);
             }
         }
     }
 
-    // All retries failed — use intelligent local fallback
-    console.log(`Using local analysis fallback for resume ${index}`);
+    // All retries failed — gracefully return an error candidate profile
+    console.error(`All Gemini analysis retries failed for resume ${index}`);
     return {
-        ...localAnalysis(jobDescription, resume.text, resume.id, competencies),
+        id: resume.id,
         fileName: resume.fileName,
-        source: 'local-fallback',
+        matchScore: 0,
+        keyStrengths: [],
+        criticalMissingSkills: [],
+        relevantProjects: [],
+        relevantExperience: [],
+        justification_bullets: [
+            '⚠️ SCORE NOT GENERATED: Gemini API rate limit or quota exceeded.',
+            '❌ Please wait exactly 1 minute and press "Analyze" again.',
+            'ℹ️ Free tier limits (15 Requests/Min). Upgrade to a paid plan for higher limits.'
+        ],
+        shortlisted: false,
+        source: 'gemini-error',
     };
 }
 
@@ -166,24 +187,19 @@ export async function POST(request) {
         const apiKey = process.env.GEMINI_API_KEY?.trim();
 
         if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-            // No API key — use local analysis for all resumes
-            console.log('No Gemini API key configured, using local analysis');
-            const results = resumes.map((resume, i) => ({
-                ...localAnalysis(jobDescription, resume.text, resume.id, competencies),
-                fileName: resume.fileName,
-                source: 'local-no-key',
-            }));
-            results.sort((a, b) => b.matchScore - a.matchScore);
-            return NextResponse.json({ candidates: results });
+            return NextResponse.json(
+                { error: 'Gemini API Key is missing or invalid. Please configure your .env variables to use Gemini analysis.' },
+                { status: 401 }
+            );
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: 'gemini-2.0-flash',
+            model: 'gemini-2.5-flash',
             generationConfig: {
                 temperature: 0.3,
                 topP: 0.8,
-                maxOutputTokens: 1024,
+                maxOutputTokens: 2048,
                 responseMimeType: 'application/json',
             },
         });

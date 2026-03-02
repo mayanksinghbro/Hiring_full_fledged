@@ -18,7 +18,8 @@
     "pdfjs-dist": "^4.0.379",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "recharts": "^3.7.0"
+    "recharts": "^3.7.0",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@prisma/client": "^6.19.2",

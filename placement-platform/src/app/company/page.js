@@ -7,22 +7,10 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { mockResumeTexts } from '@/data/mockResumes';
 import * as pdfjsLib from 'pdfjs-dist';
 
+import { parsePDFToSections } from '@/utils/pdfParser';
+
 // Configure PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
-
-// Extract text from a PDF File object
-async function extractTextFromPDF(file) {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let fullText = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const pageText = content.items.map(item => item.str).join(' ');
-        fullText += pageText + '\n';
-    }
-    return fullText.trim();
-}
 
 // Shared job store (simulates DB — all portals read from this)
 const sharedJobStore = {
@@ -72,26 +60,28 @@ export default function CompanyPortal() {
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             const fileName = file.name || file;
-            let text = '';
+            let structuredData = { rawText: '', skills: [], projects: [], experience: [] };
 
             // Try extracting real PDF text if the file has content (size > 0)
             if (file instanceof File && file.size > 0) {
                 try {
-                    text = await extractTextFromPDF(file);
+                    structuredData = await parsePDFToSections(file, pdfjsLib);
                 } catch (err) {
                     console.warn(`Failed to extract text from ${fileName}:`, err);
                 }
             }
 
             // Fall back to mock data only if extraction yielded nothing (e.g. demo files)
-            if (!text || text.length < 20) {
-                text = mockResumeTexts[fileName] || `Resume for candidate ${i + 1}. Generic resume with basic skills.`;
+            if (!structuredData.rawText || structuredData.rawText.length < 20) {
+                const mockText = mockResumeTexts[fileName] || `Resume for candidate ${i + 1}. Generic resume with basic skills.`;
+                structuredData.rawText = mockText;
+                structuredData.skills = ['Generic Skills'];
             }
 
             resumes.push({
                 id: `CND-${String(Math.floor(Math.random() * 9000) + 1000)}`,
                 fileName,
-                text,
+                ...structuredData
             });
         }
 
@@ -161,7 +151,7 @@ export default function CompanyPortal() {
                     </button>
                     <div className="flex items-center gap-3">
                         <div className="bg-white/20 p-2 rounded-lg"><span className="material-symbols-outlined text-white text-2xl">grid_view</span></div>
-                        <span className="text-[24px] font-bold tracking-tight text-white">Placify</span>
+                        <span className="text-[24px] font-bold tracking-tight text-white">NextHire</span>
                     </div>
                     <nav className="flex items-center gap-2 h-[64px]">
                         <a href="/student" className="text-[14px] font-medium text-white/70 px-4 h-full flex items-center hover:text-white border-b-2 border-transparent transition-colors">Student</a>
