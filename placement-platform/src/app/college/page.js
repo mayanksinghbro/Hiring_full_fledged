@@ -48,7 +48,7 @@ export default function CollegePortal() {
                     </button>
                     <div className="flex items-center gap-3">
                         <div className="bg-white/20 p-2 rounded-lg"><span className="material-symbols-outlined text-white text-2xl">grid_view</span></div>
-                        <span className="text-[24px] font-bold tracking-tight text-white">Placify</span>
+                        <span className="text-[24px] font-bold tracking-tight text-white">NextHire</span>
                     </div>
                     <nav className="flex items-center gap-2 h-[64px]">
                         <a href="/student" className="text-[14px] font-medium text-white/70 px-4 h-full flex items-center hover:text-white border-b-2 border-transparent transition-colors">Student</a>

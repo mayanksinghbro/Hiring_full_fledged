@@ -27,7 +27,7 @@ export default function Navbar() {
                             <Sparkles className="h-5 w-5 text-white" />
                         </div>
                         <span className="text-lg font-bold tracking-tight">
-                            <span className="gradient-text">Placify</span>
+                            <span className="gradient-text">NextHire</span>
                             <span className="text-slate-500 font-normal text-sm ml-1.5">AI</span>
                         </span>
                     </Link>
