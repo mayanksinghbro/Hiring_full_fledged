@@ -4,10 +4,8 @@ export default function EmailModal({ candidate, jobTitle, onClose }) {
     const strengths = candidate.keyStrengths || candidate.skills || [];
     const missingSkills = candidate.criticalMissingSkills || [];
 
-    const emailTemplate = {
-        to: `candidate_${candidate.id.toLowerCase()}@university.ac.in`,
-        subject: `Interview Invitation — ${jobTitle || 'Open Position'}`,
-        body: `Dear Candidate ${candidate.id},
+    // Default fallback if AI draft fails
+    const defaultTemplateString = `Dear Candidate ${candidate.id},
 
 We are pleased to inform you that after a thorough AI-powered evaluation of your resume, you have been shortlisted for the "${jobTitle || 'Open Position'}" position.
 
@@ -16,7 +14,7 @@ Your Profile Highlights:
 • Key Strengths: ${strengths.join(', ') || 'N/A'}
 
 AI Assessment Summary:
-"${candidate.justification}"
+"${candidate.justification || ''}"
 ${missingSkills.length > 0 ? `
 Areas for Growth:
 ${missingSkills.map(s => `• ${s}`).join('\n')}
@@ -32,7 +30,14 @@ We look forward to speaking with you!
 
 Best regards,
 Hiring Team
-Powered by NextHire AI`,
+Powered by NextHire AI`;
+
+    const generatedBody = candidate.emailDraft ? candidate.emailDraft : defaultTemplateString;
+
+    const emailTemplate = {
+        to: `candidate_${candidate.id.toLowerCase()}@university.ac.in`,
+        subject: `Interview Invitation — ${jobTitle || 'Open Position'}`,
+        body: generatedBody,
     };
 
     return (
@@ -66,18 +71,18 @@ Powered by NextHire AI`,
                     </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-5">
                     <div>
-                        <label className="block text-[13px] font-medium text-gray-600 mb-1.5">To</label>
-                        <input type="email" defaultValue={emailTemplate.to} className="input-field" />
+                        <label className="block text-[14px] font-bold text-gray-700 mb-2">To</label>
+                        <input type="email" defaultValue={emailTemplate.to} className="input-field block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 bg-white" />
                     </div>
                     <div>
-                        <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Subject</label>
-                        <input type="text" defaultValue={emailTemplate.subject} className="input-field" />
+                        <label className="block text-[14px] font-bold text-gray-700 mb-2">Subject</label>
+                        <input type="text" defaultValue={emailTemplate.subject} className="input-field block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 bg-white" />
                     </div>
                     <div>
-                        <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Message Body</label>
-                        <textarea className="input-field font-mono text-[12px] leading-relaxed" rows={14} defaultValue={emailTemplate.body} />
+                        <label className="block text-[14px] font-bold text-gray-700 mb-2">Message Body</label>
+                        <textarea className="input-field block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 font-mono text-[13px] leading-relaxed p-3 bg-white" rows={14} defaultValue={emailTemplate.body} />
                     </div>
                 </div>
 

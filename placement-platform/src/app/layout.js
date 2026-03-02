@@ -2,7 +2,7 @@ import "./globals.css";
 import AuthProvider from "@/components/auth/AuthProvider";
 
 export const metadata = {
-    title: "Placify AI — Intelligent Placement & Hiring Platform",
+    title: "NextHire AI — Intelligent Placement & Hiring Platform",
     description: "AI-powered platform connecting companies, students, and placement cells for smarter hiring decisions",
 };
 

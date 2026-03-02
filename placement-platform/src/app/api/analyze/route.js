@@ -2,27 +2,59 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextResponse } from 'next/server';
 
 const SYSTEM_PROMPT = `System Role:
-You are an elite, highly critical Technical Recruiter and HR Data Analyst. Your job is to strictly evaluate a candidate's resume strictly against a specific Job Description (JD).
+You are an elite Recruitment AI acting as a pipeline of 5 expert specialized skills. You will analyze a Candidate's precise resume data (Projects, Skills, Experience) against a specific Job Description (JD).
 
-Instructions:
+=== SKILL 1: jd_analyzer ===
+Purpose: Break down the Job Description into scoreable dimensions.
+Rules:
+- Extract ONLY what the JD explicitly states.
+- Split requirements into: must_have, nice_to_have, red_flags.
+- Output strictly in the JSON background logic.
 
-1. You will be provided with a complete Job Description (title, description, and required competencies) and Candidate Resume structured data (Specifically: Projects, Work Experience/Internships, and Skills extracted from the resume).
+=== SKILL 2: fit_scorer ===
+Purpose: Score a candidate against a JD — the most hallucination-prone step.
+Rules:
+- Only score based on information present in BOTH the resume and JD provided.
+- For each scoring dimension, cite the EXACT resume text that supports your score.
+- If evidence is absent, score = 0 for that dimension. Do not extrapolate.
+- Penalize vague claims without measurable outcomes.
+Dimensions: skills_match (0-30), experience_relevance (0-30), domain_fit (0-20), role_readiness (0-20). Total: sum of dimensions (0-100).
 
-2. You MUST deeply analyze the candidate's specific PROJECTS, EXPERIENCE, and SKILLS to determine how accurately they map directly against the JD requirements and compute a "match_score_out_of_100".
+=== SKILL 3: ranking_explainer ===
+Purpose: Generate the leaderboard justification for the candidate.
+Rules:
+- Write in plain, professional English. Reference only verifiable resume points.
+- Structure: 3 strengths, 1 gap (under 120 words total).
+- Prefix the 3 strengths with '✅', and the 1 gap with '❌'.
+- Give specific, detailed explanations of the candidate's PROJECTS and why they align with the tech stack.
 
-13. The "justification_bullets" MUST be an array of up to 3 short bullet points explaining EXACTLY WHY the candidate was assigned this specific match score. Explicitly state whether their Projects, Experience, and Skills align with the requirements, or if they fall short. Start each bullet with an appropriate emoji (✅ for strengths, ❌ for missing skills, ⚠️ for warnings/weaknesses). DO NOT give generic or vague responses. Cite specific skills or projects listed.
+=== SKILL 4: email_composer ===
+Purpose: Generate a pre-formatted shortlist email.
+Rules:
+- Write a professional but warm shortlisting email.
+- Include: [CANDIDATE_NAME], [ROLE], [COMPANY], [LINK_PLACEHOLDER] as editable tokens.
+- Keep tone encouraging but professional. Max 150 words. Do not fabricate interview details.
 
-4. For critical_missing_skills: ONLY list skills/technologies that are EXPLICITLY written in the JD's Required Competencies or job description text. Do NOT invent, infer, or add any skills that are not directly mentioned in the JD.
+=== SKILL 5: hallucination_guard ===
+Purpose: Validation layer after all generated output.
+Rules:
+- Flag any claims in your own output that cannot be traced back precisely to the candidate's raw data.
+- Output: { "hallucinated_claims": [], "confidence": "high/medium/low", "safe_to_use": true/false }
 
 Output Format (Strict JSON):
-You must output your analysis in the following strict JSON format. Do not include markdown formatting or outside text.
+You must output your analysis in the following strict JSON format:
 {
-  "match_score_out_of_100": <integer based strictly on JD skill/experience overlap>,
-  "key_strengths": ["<Specific matching skill from resume that JD requires>", "..."],
-  "critical_missing_skills": ["<Required skill/tech in JD NOT found in resume>", "..."],
-  "relevant_projects": ["<Project name from resume — brief reason it's relevant to JD>", "..."],
-  "relevant_experience": ["<Internship/role from resume — brief reason it's relevant to JD>", "..."],
-  "justification_bullets": ["<✅ Example strength...>", "<❌ Example weakness...>", "<⚠️ Example warning...>"]
+  "match_score_out_of_100": <integer 0-100 from fit_scorer>,
+  "key_strengths": ["<Specific matching skill>", "..."],
+  "critical_missing_skills": ["<Required JD skill NOT found in resume>", "..."],
+  "relevant_projects": ["<Detailed explanation of candidate's project and why it fits JD>", "..."],
+  "justification_bullets": ["✅ <Strength 1...>", "✅ <Strength 2...>", "✅ <Strength 3...>", "❌ <Gap...>"],
+  "email_draft": "<Plain text email body mapped to the skill 4 rules>",
+  "hallucination_guard": {
+      "hallucinated_claims": ["claim 1", "..."],
+      "confidence": "high",
+      "safe_to_use": true
+  }
 }`;
 
 function buildPrompt(jobDescription, resume, competencies) {
@@ -113,22 +145,37 @@ async function analyzeWithRetry(model, jobDescription, resume, index, competenci
                 const jsonMatch = responseText.match(/\{[\s\S]*\}/);
                 analysis = JSON.parse(jsonMatch ? jsonMatch[0] : responseText);
             } catch (parseErr) {
-                console.error(`Parse error resume ${index}, attempt ${attempt}:`, responseText.slice(0, 200));
-                if (attempt === maxRetries) throw new Error('JSON parse failed');
+                console.error(`[PARSE ERROR] Resume ${index}, attempt ${attempt}:`, parseErr.message);
+                console.error(`[RAW STRING EXCERPT]`, responseText.slice(-200));
+
+                if (attempt === maxRetries) throw new Error('JSON parse failed: ' + parseErr.message);
                 await delay(2000);
                 continue;
+            }
+
+            const emailDraft = analysis.email_draft || '';
+            const hallucinationGuard = analysis.hallucination_guard || { safe_to_use: true };
+            const matchScore = analysis.match_score_out_of_100 || 0;
+
+            // Apply hallucination guard strictness: if the model flagged itself, penalize the score
+            const finalScore = hallucinationGuard.safe_to_use === false ? Math.max(0, matchScore - 20) : matchScore;
+
+            if (hallucinationGuard.safe_to_use === false) {
+                console.warn(`[Hallucination Guard] Penalized Resume ${index} for flagged claims:`, hallucinationGuard.hallucinated_claims);
             }
 
             return {
                 id: resume.id,
                 fileName: resume.fileName,
-                matchScore: analysis.match_score_out_of_100 || 0,
+                matchScore: finalScore,
                 keyStrengths: analysis.key_strengths || [],
                 criticalMissingSkills: analysis.critical_missing_skills || [],
                 relevantProjects: analysis.relevant_projects || [],
                 relevantExperience: analysis.relevant_experience || [],
-                justification_bullets: analysis.justification_bullets || ['⚠️ No justification provided by AI.'],
-                shortlisted: false,
+                justification_bullets: analysis.justification_bullets || [],
+                emailDraft: emailDraft,
+                hallucinationGuard: hallucinationGuard,
+                shortlisted: finalScore >= 70,
                 source: 'gemini',
             };
         } catch (err) {
@@ -164,10 +211,12 @@ async function analyzeWithRetry(model, jobDescription, resume, index, competenci
         relevantProjects: [],
         relevantExperience: [],
         justification_bullets: [
-            '⚠️ SCORE NOT GENERATED: Gemini API rate limit or quota exceeded.',
+            '⚠️ SCORE NOT GENERATED: Gemini API error or parsing failed.',
             '❌ Please wait exactly 1 minute and press "Analyze" again.',
-            'ℹ️ Free tier limits (15 Requests/Min). Upgrade to a paid plan for higher limits.'
+            'ℹ️ Try clearing your Next.js cache or ensuring prompt alignment.'
         ],
+        emailDraft: '',
+        hallucinationGuard: { safe_to_use: true },
         shortlisted: false,
         source: 'gemini-error',
     };

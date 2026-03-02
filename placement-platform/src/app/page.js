@@ -17,7 +17,7 @@ export default function LandingPage() {
                         <div className="bg-white/20 p-2 rounded-lg">
                             <span className="material-symbols-outlined text-white text-2xl">grid_view</span>
                         </div>
-                        <span className="text-[24px] font-bold tracking-tight text-white">Placify</span>
+                        <span className="text-[24px] font-bold tracking-tight text-white">NextHire</span>
                         <span className="ml-2 px-2.5 py-0.5 bg-white/10 text-white/80 text-[11px] font-bold rounded-full uppercase tracking-wider border border-white/20">AI Powered</span>
                     </div>
                     <div className="flex items-center gap-3">
@@ -47,7 +47,7 @@ export default function LandingPage() {
                         </h1>
 
                         <p className="text-[18px] text-gray-600 leading-relaxed max-w-[560px] mx-auto mb-10">
-                            Placify connects students, companies, and placement cells on one intelligent platform — powered by Gemini AI for blind hiring, skill gap analysis, and career roadmapping.
+                            NextHire connects students, companies, and placement cells on one intelligent platform — powered by Gemini AI for blind hiring, skill gap analysis, and career roadmapping.
                         </p>
 
                         <div className="flex items-center justify-center gap-4">
@@ -220,7 +220,7 @@ export default function LandingPage() {
                     </div>
                     <div className="relative z-10">
                         <h2 className="text-[36px] font-bold text-white mb-4">Ready to Transform Your Placement Process?</h2>
-                        <p className="text-[16px] text-white/60 max-w-[500px] mx-auto mb-8">Join hundreds of institutions using Placify to make campus hiring smarter, faster, and fairer.</p>
+                        <p className="text-[16px] text-white/60 max-w-[500px] mx-auto mb-8">Join hundreds of institutions using NextHire to make campus hiring smarter, faster, and fairer.</p>
                         <div className="flex items-center justify-center gap-4">
                             <a href="/auth/login/student" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-[16px] font-semibold transition-all shadow-lg hover:-translate-y-0.5">
                                 <span className="material-symbols-outlined text-[20px]">person_add</span>Sign Up Free
@@ -241,14 +241,14 @@ export default function LandingPage() {
                             <div className="bg-white/20 p-2 rounded-lg">
                                 <span className="material-symbols-outlined text-white text-xl">grid_view</span>
                             </div>
-                            <span className="text-[16px] font-bold text-white">Placify</span>
+                            <span className="text-[16px] font-bold text-white">NextHire</span>
                         </div>
                         <div className="flex items-center gap-6">
                             <a href="/auth/login/student" className="text-[13px] text-white/50 hover:text-white transition-colors">Student</a>
                             <a href="/auth/login/company" className="text-[13px] text-white/50 hover:text-white transition-colors">Company</a>
                             <a href="/auth/login/college" className="text-[13px] text-white/50 hover:text-white transition-colors">College</a>
                         </div>
-                        <p className="text-[13px] text-white/30">&copy; 2026 Placify. AI-powered placement platform.</p>
+                        <p className="text-[13px] text-white/30">&copy; 2026 NextHire. AI-powered placement platform.</p>
                     </div>
                 </div>
             </footer>
