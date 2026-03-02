@@ -135,6 +135,7 @@ function localAnalysis(jobDescription, resume, candidateId, competencies = []) {
 }
 
 async function analyzeWithRetry(model, jobDescription, resume, index, competencies = [], maxRetries = 2) {
+    let lastErrMessage = 'Unknown error';
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             const prompt = buildPrompt(jobDescription, resume, competencies);
@@ -179,7 +180,8 @@ async function analyzeWithRetry(model, jobDescription, resume, index, competenci
                 source: 'gemini',
             };
         } catch (err) {
-            console.error(`Attempt ${attempt + 1} failed for resume ${index}:`, err.message?.slice(0, 150));
+            lastErrMessage = err.message || JSON.stringify(err);
+            console.error(`Attempt ${attempt + 1} failed for resume ${index}:`, lastErrMessage.slice(0, 150));
 
             if (attempt < maxRetries) {
                 let backoffMS = (attempt + 1) * 3000;
@@ -212,7 +214,7 @@ async function analyzeWithRetry(model, jobDescription, resume, index, competenci
         relevantExperience: [],
         justification_bullets: [
             '⚠️ SCORE NOT GENERATED: Gemini API error or parsing failed.',
-            '❌ Please wait exactly 1 minute and press "Analyze" again.',
+            `❌ Error: ${lastErrMessage.slice(0, 250)}`,
             'ℹ️ Try clearing your Next.js cache or ensuring prompt alignment.'
         ],
         emailDraft: '',
