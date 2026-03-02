@@ -38,7 +38,7 @@ export default function CollegeLogin() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center font-sans" style={{ backgroundImage: 'linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%)' }}>
+        <div className="min-h-screen flex items-center justify-center font-sans" style={{ backgroundImage: 'linear-gradient(to bottom, rgba(255,255,255,0.25), rgba(240,242,245,0.35)), url(/backgrounds/portal-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed', backgroundRepeat: 'no-repeat' }}>
             <div className="w-full max-w-[440px] mx-4">
                 <div className="text-center mb-8">
                     <a href="/" className="inline-flex items-center gap-3">
