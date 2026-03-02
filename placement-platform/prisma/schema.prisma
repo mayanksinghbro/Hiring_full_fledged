@@ -1,0 +1,324 @@
+// This is your Prisma schema file.
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Neon requires this for connection pooling (used in serverless / Next.js API routes)
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// NEXT-AUTH REQUIRED MODELS
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+
+  // Our custom fields
+  role      String  @default("student") // student | college_admin | company_hr
+  college   College? @relation(fields: [collegeId], references: [id])
+  collegeId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+  companyId String?
+
+  // NextAuth relations
+  accounts Account[]
+  sessions Session[]
+
+  // Our app relations
+  student Student?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────────────────────
+// COLLEGES
+// ─────────────────────────────────────────────────────────────
+
+model College {
+  id        String   @id @default(cuid())
+  name      String
+  city      String?
+  state     String?
+  website   String?
+  createdAt DateTime @default(now())
+
+  users           User[]
+  students        Student[]
+  placementDrives PlacementDrive[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// COMPANIES
+// ─────────────────────────────────────────────────────────────
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  website   String?
+  industry  String?
+  logoUrl   String?
+  createdAt DateTime @default(now())
+
+  users           User[]
+  jobPostings     JobPosting[]
+  placementDrives PlacementDrive[]
+  placementOffers PlacementOffer[]
+  gapAnalyses     GapAnalysis[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// STUDENTS
+// ─────────────────────────────────────────────────────────────
+
+model Student {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String   @unique
+  college    College? @relation(fields: [collegeId], references: [id])
+  collegeId  String?
+  rollNumber String?
+  branch     String? // e.g. 'Computer Science'
+  batchYear  Int? // graduation year e.g. 2026
+  cgpa       Decimal? @db.Decimal(3, 1)
+  linkedin   String?
+  github     String?
+  portfolio  String?
+  phone      String?
+  isPlaced   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  skills          StudentSkill[]
+  resumes         Resume[]
+  applications    Application[]
+  placementOffers PlacementOffer[]
+  gapAnalyses     GapAnalysis[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// SKILLS (master list)
+// ─────────────────────────────────────────────────────────────
+
+model Skill {
+  id   String @id @default(cuid())
+  name String @unique
+
+  studentSkills   StudentSkill[]
+  jobRequirements JobRequirement[]
+}
+
+// Many-to-many: Students ↔ Skills
+model StudentSkill {
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId String
+  skill     Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  skillId   String
+
+  @@id([studentId, skillId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// RESUMES
+// ─────────────────────────────────────────────────────────────
+
+model Resume {
+  id          String   @id @default(cuid())
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId   String
+  fileName    String?
+  storagePath String? // path in file storage (e.g. Uploadthing / Cloudinary)
+  parsedText  String?  @db.Text // extracted PDF text for AI matching
+  isPrimary   Boolean  @default(true)
+  uploadedAt  DateTime @default(now())
+
+  applications Application[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLACEMENT DRIVES (company visiting a college)
+// ─────────────────────────────────────────────────────────────
+
+model PlacementDrive {
+  id          String    @id @default(cuid())
+  college     College   @relation(fields: [collegeId], references: [id])
+  collegeId   String
+  company     Company   @relation(fields: [companyId], references: [id])
+  companyId   String
+  driveDate   DateTime? @db.Date
+  status      String    @default("upcoming") // upcoming | ongoing | completed | cancelled
+  description String?
+  createdAt   DateTime  @default(now())
+
+  jobPostings JobPosting[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// JOB POSTINGS (a role within a drive)
+// ─────────────────────────────────────────────────────────────
+
+model JobPosting {
+  id          String          @id @default(cuid())
+  drive       PlacementDrive? @relation(fields: [driveId], references: [id])
+  driveId     String?
+  company     Company         @relation(fields: [companyId], references: [id])
+  companyId   String
+  title       String // e.g. 'SDE-1', 'Full Stack Dev'
+  description String?         @db.Text
+  packageLpa  Decimal?        @db.Decimal(5, 2)
+  roleType    String          @default("full_time") // full_time | internship
+  status      String          @default("active") // draft | active | closed
+  createdAt   DateTime        @default(now())
+
+  requirements    JobRequirement[]
+  applications    Application[]
+  placementOffers PlacementOffer[]
+}
+
+// Many-to-many: JobPostings ↔ Skills
+model JobRequirement {
+  job     JobPosting @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  jobId   String
+  skill   Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  skillId String
+
+  @@id([jobId, skillId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// APPLICATIONS (student applying to a job)
+// ─────────────────────────────────────────────────────────────
+
+model Application {
+  id              String   @id @default(cuid())
+  job             JobPosting @relation(fields: [jobId], references: [id])
+  jobId           String
+  student         Student  @relation(fields: [studentId], references: [id])
+  studentId       String
+  resume          Resume?  @relation(fields: [resumeId], references: [id])
+  resumeId        String?
+  matchScore      Decimal? @db.Decimal(5, 2) // 0-100, AI-generated
+  aiJustification String?  @db.Text
+  status          String   @default("applied") // applied | shortlisted | interview | offered | rejected | placed
+  shortlisted     Boolean  @default(false)
+  appliedAt       DateTime @default(now())
+
+  placementOffer PlacementOffer?
+
+  @@unique([jobId, studentId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLACEMENT OFFERS (final offer)
+// ─────────────────────────────────────────────────────────────
+
+model PlacementOffer {
+  id            String      @id @default(cuid())
+  application   Application @relation(fields: [applicationId], references: [id])
+  applicationId String      @unique
+  student       Student     @relation(fields: [studentId], references: [id])
+  studentId     String
+  company       Company     @relation(fields: [companyId], references: [id])
+  companyId     String
+  job           JobPosting  @relation(fields: [jobId], references: [id])
+  jobId         String
+  packageLpa    Decimal?    @db.Decimal(5, 2)
+  offerDate     DateTime?   @db.Date
+  joiningDate   DateTime?   @db.Date
+  status        String      @default("pending") // pending | accepted | declined
+  createdAt     DateTime    @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────
+// GAP ANALYSIS
+// ─────────────────────────────────────────────────────────────
+
+model GapAnalysis {
+  id         String   @id @default(cuid())
+  student    Student  @relation(fields: [studentId], references: [id])
+  studentId  String
+  company    Company  @relation(fields: [companyId], references: [id])
+  companyId  String
+  targetRole String? // e.g. 'Frontend Dev', 'Backend Dev'
+  createdAt  DateTime @default(now())
+
+  gapItems     GapItem[]
+  roadmapSteps RoadmapStep[]
+  courses      Course[]
+}
+
+model GapItem {
+  id            String      @id @default(cuid())
+  gapAnalysis   GapAnalysis @relation(fields: [gapAnalysisId], references: [id], onDelete: Cascade)
+  gapAnalysisId String
+  skillName     String
+  severity      String? // high | medium | low
+  description   String?
+}
+
+model RoadmapStep {
+  id            String      @id @default(cuid())
+  gapAnalysis   GapAnalysis @relation(fields: [gapAnalysisId], references: [id], onDelete: Cascade)
+  gapAnalysisId String
+  phase         String? // e.g. 'Week 1-2', 'Month 2'
+  title         String?
+  description   String?
+  stepType      String? // learn | practice | project | milestone
+  orderIndex    Int         @default(0)
+}
+
+model Course {
+  id            String      @id @default(cuid())
+  gapAnalysis   GapAnalysis @relation(fields: [gapAnalysisId], references: [id], onDelete: Cascade)
+  gapAnalysisId String
+  title         String?
+  platform      String? // e.g. 'Udemy', 'Coursera', 'MIT OCW'
+  instructor    String?
+  rating        Decimal?    @db.Decimal(2, 1)
+  url           String?
+  durationText  String? // e.g. '24 hours'
+  price         String? // e.g. '₹649', 'Free'
+}
