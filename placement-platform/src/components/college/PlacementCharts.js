@@ -5,7 +5,6 @@ import {
     AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
-import { placementTrend, skillDistribution } from '@/data/mockCollegeData';
 
 const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -23,7 +22,7 @@ const CustomTooltip = ({ active, payload, label }) => {
     return null;
 };
 
-export default function PlacementCharts() {
+export default function PlacementCharts({ trendData = [], skillData = [] }) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Placement Trend */}
@@ -36,7 +35,7 @@ export default function PlacementCharts() {
                 </div>
                 <div className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={placementTrend}>
+                        <AreaChart data={trendData}>
                             <defs>
                                 <linearGradient id="placedGrad" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
@@ -87,7 +86,7 @@ export default function PlacementCharts() {
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
-                                data={skillDistribution}
+                                data={skillData}
                                 cx="50%"
                                 cy="50%"
                                 innerRadius={60}
@@ -95,7 +94,7 @@ export default function PlacementCharts() {
                                 paddingAngle={2}
                                 dataKey="value"
                             >
-                                {skillDistribution.map((entry, i) => (
+                                {skillData.map((entry, i) => (
                                     <Cell key={`cell-${i}`} fill={entry.fill} />
                                 ))}
                             </Pie>

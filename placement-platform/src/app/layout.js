@@ -1,5 +1,6 @@
 import "./globals.css";
 import Navbar from "@/components/ui/Navbar";
+import AuthProvider from "@/components/providers/AuthProvider";
 
 export const metadata = {
     title: "Placify AI — Intelligent Placement & Hiring Platform",
@@ -15,10 +16,12 @@ export default function RootLayout({ children }) {
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
             </head>
             <body className="antialiased">
-                <Navbar />
-                <main className="min-h-[calc(100vh-4rem)]">
-                    {children}
-                </main>
+                <AuthProvider>
+                    <Navbar />
+                    <main className="min-h-[calc(100vh-4rem)]">
+                        {children}
+                    </main>
+                </AuthProvider>
             </body>
         </html>
     );

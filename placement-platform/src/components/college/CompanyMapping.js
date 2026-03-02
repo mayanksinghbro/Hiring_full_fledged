@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { Building2, Crown, Shield, Users, ChevronDown, Tag, Trophy } from 'lucide-react';
-import { visitingCompanies, topStudentsForCompany } from '@/data/mockCollegeData';
 
-export default function CompanyMapping() {
-    const [selectedCompany, setSelectedCompany] = useState('');
-    const students = selectedCompany ? topStudentsForCompany[selectedCompany] || [] : [];
-    const company = visitingCompanies.find((c) => c.id === selectedCompany);
+export default function CompanyMapping({ visitingCompanies = [] }) {
+    const [selectedCompanyId, setSelectedCompanyId] = useState('');
+
+    const company = visitingCompanies.find((c) => c.id === selectedCompanyId);
+    const students = company?.topStudents || [];
 
     const getScoreColor = (score) => {
         if (score >= 90) return 'text-emerald-400';
@@ -32,7 +32,7 @@ export default function CompanyMapping() {
                 </div>
                 <div>
                     <h2 className="text-xl font-bold text-slate-100">Company-Student Mapping</h2>
-                    <p className="text-sm text-slate-500">AI-matched top 10% students (overriding CGPA metrics)</p>
+                    <p className="text-sm text-slate-500">AI-matched top students (overriding CGPA metrics)</p>
                 </div>
             </div>
 
@@ -43,13 +43,13 @@ export default function CompanyMapping() {
                     {visitingCompanies.map((c) => (
                         <button
                             key={c.id}
-                            onClick={() => setSelectedCompany(c.id)}
-                            className={`rounded-xl p-4 text-left transition-all border ${selectedCompany === c.id
-                                    ? 'bg-indigo-500/10 border-indigo-500/30 ring-2 ring-indigo-500/20'
-                                    : 'bg-slate-800/30 border-slate-700/30 hover:border-slate-600/50 hover:bg-slate-800/50'
+                            onClick={() => setSelectedCompanyId(c.id)}
+                            className={`rounded-xl p-4 text-left transition-all border ${selectedCompanyId === c.id
+                                ? 'bg-indigo-500/10 border-indigo-500/30 ring-2 ring-indigo-500/20'
+                                : 'bg-slate-800/30 border-slate-700/30 hover:border-slate-600/50 hover:bg-slate-800/50'
                                 }`}
                         >
-                            <p className={`font-bold text-sm ${selectedCompany === c.id ? 'text-indigo-300' : 'text-slate-300'}`}>
+                            <p className={`font-bold text-sm ${selectedCompanyId === c.id ? 'text-indigo-300' : 'text-slate-300'}`}>
                                 {c.name}
                             </p>
                             <p className="text-xs text-slate-500 mt-0.5">{c.role}</p>
@@ -135,7 +135,7 @@ export default function CompanyMapping() {
                 </div>
             )}
 
-            {!selectedCompany && (
+            {!selectedCompanyId && (
                 <div className="text-center py-12 text-slate-600">
                     <Building2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
                     <p className="font-medium">Select a company above to see matched students</p>
