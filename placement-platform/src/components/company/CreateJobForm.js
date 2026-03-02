@@ -1,6 +1,23 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+
+const SKILL_SUGGESTIONS = [
+    'Python', 'JavaScript', 'TypeScript', 'Java', 'C++', 'C#', 'C', 'Go', 'Rust', 'Ruby', 'PHP', 'Swift', 'Kotlin', 'Scala', 'Perl',
+    'React', 'Next.js', 'Angular', 'Vue.js', 'Svelte', 'Node.js', 'Express.js', 'Django', 'Flask', 'Spring Boot', 'Laravel', 'Ruby on Rails',
+    'HTML', 'CSS', 'Tailwind CSS', 'Bootstrap', 'SASS', 'LESS',
+    'SQL', 'MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'Firebase', 'Supabase', 'DynamoDB', 'Cassandra', 'SQLite',
+    'AWS', 'Azure', 'Google Cloud', 'Docker', 'Kubernetes', 'Terraform', 'Jenkins', 'CI/CD', 'GitHub Actions',
+    'Git', 'Linux', 'Bash', 'REST API', 'GraphQL', 'gRPC', 'WebSockets',
+    'Machine Learning', 'Deep Learning', 'NLP', 'Computer Vision', 'TensorFlow', 'PyTorch', 'Scikit-learn', 'Pandas', 'NumPy',
+    'Data Structures', 'Algorithms', 'System Design', 'OOP', 'Design Patterns', 'Microservices', 'Agile', 'Scrum',
+    'Testing', 'Jest', 'Cypress', 'Selenium', 'Unit Testing', 'Integration Testing',
+    'Figma', 'UI/UX Design', 'Adobe XD', 'Photoshop',
+    'Blockchain', 'Solidity', 'Web3', 'Smart Contracts',
+    'React Native', 'Flutter', 'Android', 'iOS', 'Mobile Development',
+    'DevOps', 'Networking', 'Cybersecurity', 'Cloud Computing', 'Data Analytics', 'Power BI', 'Tableau',
+    'Communication', 'Leadership', 'Problem Solving', 'Critical Thinking', 'Teamwork', 'Project Management',
+];
 
 export default function CreateJobForm({ onAnalyze }) {
     const [title, setTitle] = useState('');
@@ -9,12 +26,41 @@ export default function CreateJobForm({ onAnalyze }) {
     const [competencies, setCompetencies] = useState([]);
     const [files, setFiles] = useState([]);
     const [dragOver, setDragOver] = useState(false);
+    const [topN, setTopN] = useState('');
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const fileInputRef = useRef(null);
+    const suggestionsRef = useRef(null);
+    const competencyInputRef = useRef(null);
 
-    const addCompetency = () => {
-        if (competency.trim() && !competencies.includes(competency.trim())) {
-            setCompetencies([...competencies, competency.trim()]);
+    const filteredSuggestions = competency.trim()
+        ? SKILL_SUGGESTIONS.filter(
+            skill => skill.toLowerCase().includes(competency.toLowerCase()) && !competencies.includes(skill)
+        ).slice(0, 8)
+        : [];
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (suggestionsRef.current && !suggestionsRef.current.contains(e.target) &&
+                competencyInputRef.current && !competencyInputRef.current.contains(e.target)) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        setHighlightedIndex(-1);
+    }, [competency]);
+
+    const addCompetency = (value) => {
+        const val = (value || competency).trim();
+        if (val && !competencies.includes(val)) {
+            setCompetencies([...competencies, val]);
             setCompetency('');
+            setShowSuggestions(false);
+            setHighlightedIndex(-1);
         }
     };
 
@@ -22,7 +68,37 @@ export default function CreateJobForm({ onAnalyze }) {
         setCompetencies(competencies.filter((item) => item !== c));
     };
 
+    const selectSuggestion = (skill) => {
+        addCompetency(skill);
+        competencyInputRef.current?.focus();
+    };
+
     const handleKeyDown = (e) => {
+        if (showSuggestions && filteredSuggestions.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setHighlightedIndex(prev => (prev + 1) % filteredSuggestions.length);
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setHighlightedIndex(prev => prev <= 0 ? filteredSuggestions.length - 1 : prev - 1);
+                return;
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (highlightedIndex >= 0) {
+                    selectSuggestion(filteredSuggestions[highlightedIndex]);
+                } else {
+                    addCompetency();
+                }
+                return;
+            }
+            if (e.key === 'Escape') {
+                setShowSuggestions(false);
+                return;
+            }
+        }
         if (e.key === 'Enter') {
             e.preventDefault();
             addCompetency();
@@ -93,8 +169,47 @@ export default function CreateJobForm({ onAnalyze }) {
                     <div>
                         <label className="block text-[13px] font-medium text-gray-700 mb-1.5">Expected Competencies</label>
                         <div className="flex gap-2">
-                            <input type="text" value={competency} onChange={(e) => setCompetency(e.target.value)} onKeyDown={handleKeyDown} placeholder="e.g. React, TypeScript..." className="flex-1 px-4 py-3 bg-white/50 border border-white/60 rounded-xl text-[15px] focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder-gray-400" />
-                            <button onClick={addCompetency} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-[14px] font-semibold transition-colors flex items-center gap-1">
+                            <div className="relative flex-1">
+                                <input
+                                    ref={competencyInputRef}
+                                    type="text"
+                                    value={competency}
+                                    onChange={(e) => { setCompetency(e.target.value); setShowSuggestions(true); }}
+                                    onFocus={() => setShowSuggestions(true)}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder="e.g. React, TypeScript..."
+                                    className="w-full px-4 py-3 bg-white/50 border border-white/60 rounded-xl text-[15px] focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder-gray-400"
+                                    autoComplete="off"
+                                />
+                                {showSuggestions && filteredSuggestions.length > 0 && (
+                                    <div
+                                        ref={suggestionsRef}
+                                        className="absolute z-50 left-0 right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden max-h-56 overflow-y-auto"
+                                    >
+                                        {filteredSuggestions.map((skill, idx) => (
+                                            <button
+                                                key={skill}
+                                                onClick={() => selectSuggestion(skill)}
+                                                onMouseEnter={() => setHighlightedIndex(idx)}
+                                                className={`w-full text-left px-4 py-2.5 text-[14px] transition-colors flex items-center gap-2 ${idx === highlightedIndex
+                                                    ? 'bg-blue-50 text-blue-700'
+                                                    : 'text-gray-700 hover:bg-gray-50'
+                                                    }`}
+                                            >
+                                                <span className="material-symbols-outlined text-[16px]" style={{ color: idx === highlightedIndex ? '#2563EB' : '#9CA3AF' }}>code</span>
+                                                <span>
+                                                    {skill.split(new RegExp(`(${competency.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'i')).map((part, i) =>
+                                                        part.toLowerCase() === competency.toLowerCase()
+                                                            ? <strong key={i} className="font-bold text-blue-600">{part}</strong>
+                                                            : <span key={i}>{part}</span>
+                                                    )}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <button onClick={() => addCompetency()} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-[14px] font-semibold transition-colors flex items-center gap-1">
                                 <span className="material-symbols-outlined text-[16px]">add</span>Add
                             </button>
                         </div>
@@ -110,6 +225,19 @@ export default function CreateJobForm({ onAnalyze }) {
                                 ))}
                             </div>
                         )}
+                    </div>
+                    <div>
+                        <label className="block text-[13px] font-medium text-gray-700 mb-1.5">
+                            Top Candidates to Show <span className="text-gray-400 font-normal">(Optional)</span>
+                        </label>
+                        <input
+                            type="number"
+                            min="1"
+                            value={topN}
+                            onChange={(e) => setTopN(e.target.value)}
+                            placeholder="e.g. 5 (Leave empty to show all)"
+                            className="w-full px-4 py-3 bg-white/50 border border-white/60 rounded-xl text-[15px] focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder-gray-400"
+                        />
                     </div>
                 </div>
 
@@ -172,7 +300,7 @@ export default function CreateJobForm({ onAnalyze }) {
 
             <div className="mt-8 flex justify-center">
                 <button
-                    onClick={() => onAnalyze({ title: title || 'Senior Frontend Developer', description, competencies, files: files.map(f => f.name || f) })}
+                    onClick={() => onAnalyze({ title: title || 'Senior Frontend Developer', description, competencies, topN: topN ? parseInt(topN) : 0, files })}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl text-[15px] font-semibold transition-colors shadow-lg shadow-blue-900/20 flex items-center gap-2 disabled:opacity-50"
                     disabled={files.length === 0}
                 >

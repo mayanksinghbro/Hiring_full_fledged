@@ -37,8 +37,13 @@ export default function CandidateLeaderboard({ candidates, jobTitle, resumeTexts
                             <span className="material-symbols-outlined text-amber-600 text-xl">emoji_events</span>
                         </div>
                         <div>
-                            <h2 className="text-[18px] font-bold text-gray-900">AI Candidate Leaderboard</h2>
-                            <p className="text-[13px] text-gray-500">Ranked by Gemini AI Match Score — Blind Hiring Mode</p>
+                            <div className="flex items-center gap-3">
+                                <h2 className="text-[18px] font-bold text-gray-900">AI Candidate Leaderboard</h2>
+                                <span className="px-2.5 py-0.5 bg-gray-100/80 text-gray-600 rounded-lg text-[12px] font-bold border border-gray-200">
+                                    Showing Top {candidates.length}
+                                </span>
+                            </div>
+                            <p className="text-[13px] text-gray-500 mt-1">Ranked by Gemini AI Match Score — Blind Hiring Mode</p>
                         </div>
                     </div>
                     <span className="badge badge-purple"><span className="material-symbols-outlined text-[14px]">shield</span>Names Hidden</span>
@@ -62,6 +67,8 @@ export default function CandidateLeaderboard({ candidates, jobTitle, resumeTexts
                                 const rank = index + 1;
                                 const strengths = candidate.keyStrengths || candidate.skills || [];
                                 const missingSkills = candidate.criticalMissingSkills || [];
+                                const relevantProjects = candidate.relevantProjects || [];
+                                const relevantExperience = candidate.relevantExperience || [];
                                 return (
                                     <tr key={candidate.id} className="group hover:bg-gray-50 transition-colors">
                                         <td className="py-4">
@@ -90,7 +97,25 @@ export default function CandidateLeaderboard({ candidates, jobTitle, resumeTexts
                                             </div>
                                         </td>
                                         <td className="py-4">
-                                            <p className="text-[12px] text-gray-500 leading-relaxed max-w-sm">{candidate.justification}</p>
+                                            <div className="flex flex-col gap-2">
+                                                <p className="text-[12px] text-gray-700 leading-relaxed max-w-sm">{candidate.justification}</p>
+                                                {(relevantProjects.length > 0 || relevantExperience.length > 0) && (
+                                                    <div className="flex flex-col gap-1.5 mt-1 border-t border-gray-100 pt-2">
+                                                        {relevantExperience.length > 0 && (
+                                                            <div className="flex items-start gap-1">
+                                                                <span className="material-symbols-outlined text-[13px] text-blue-500 mt-0.5 shrink-0">work</span>
+                                                                <span className="text-[11px] text-gray-600 leading-tight"><strong>Experience:</strong> {relevantExperience.join(', ')}</span>
+                                                            </div>
+                                                        )}
+                                                        {relevantProjects.length > 0 && (
+                                                            <div className="flex items-start gap-1">
+                                                                <span className="material-symbols-outlined text-[13px] text-purple-500 mt-0.5 shrink-0">folder_special</span>
+                                                                <span className="text-[11px] text-gray-600 leading-tight"><strong>Projects:</strong> {relevantProjects.join(', ')}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="py-4">
                                             <div className="flex flex-wrap gap-1">
