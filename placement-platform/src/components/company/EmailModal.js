@@ -1,7 +1,5 @@
 'use client';
 
-import { X, Send, Mail, User } from 'lucide-react';
-
 export default function EmailModal({ candidate, jobTitle, onClose }) {
     const strengths = candidate.keyStrengths || candidate.skills || [];
     const missingSkills = candidate.criticalMissingSkills || [];
@@ -40,72 +38,53 @@ Powered by Placify AI`,
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '640px' }}>
-                {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600">
-                            <Mail className="h-5 w-5 text-white" />
+                        <div className="bg-blue-100 p-2.5 rounded-xl">
+                            <span className="material-symbols-outlined text-[#2563EB] text-xl">mail</span>
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-slate-100">Shortlist & Send Email</h3>
-                            <p className="text-sm text-slate-500">Candidate {candidate.id}</p>
+                            <h3 className="text-[18px] font-bold text-gray-900">Shortlist & Send Email</h3>
+                            <p className="text-[13px] text-gray-500">Candidate {candidate.id}</p>
                         </div>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-700/50 transition-colors"
-                    >
-                        <X className="h-5 w-5" />
+                    <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                        <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
 
-                {/* Candidate Badge */}
-                <div className="flex items-center gap-4 mb-6 p-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/20">
-                        <User className="h-6 w-6 text-indigo-400" />
+                <div className="flex items-center gap-4 mb-6 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 border border-blue-200">
+                        <span className="material-symbols-outlined text-[#2563EB]">person</span>
                     </div>
                     <div className="flex-1">
-                        <p className="font-semibold text-slate-200">{candidate.id}</p>
-                        <p className="text-sm text-slate-500">Blind Hiring — Identity Protected</p>
+                        <p className="font-semibold text-gray-800">{candidate.id}</p>
+                        <p className="text-[13px] text-gray-500">Blind Hiring — Identity Protected</p>
                     </div>
-                    <div className={`px-3 py-1.5 rounded-lg font-bold text-sm ${candidate.matchScore >= 90 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                            candidate.matchScore >= 80 ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
-                                candidate.matchScore >= 70 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                                    'bg-slate-500/10 text-slate-400 border border-slate-500/20'
-                        }`}>
+                    <div className={`px-3 py-1.5 rounded-lg font-bold text-[13px] ${candidate.matchScore >= 90 ? 'bg-green-50 text-green-700 border border-green-200' : candidate.matchScore >= 80 ? 'bg-blue-50 text-blue-700 border border-blue-200' : candidate.matchScore >= 70 ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-gray-50 text-gray-600 border border-gray-200'}`}>
                         {candidate.matchScore}% Match
                     </div>
                 </div>
 
-                {/* Email Form */}
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">To</label>
+                        <label className="block text-[13px] font-medium text-gray-600 mb-1.5">To</label>
                         <input type="email" defaultValue={emailTemplate.to} className="input-field" />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Subject</label>
+                        <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Subject</label>
                         <input type="text" defaultValue={emailTemplate.subject} className="input-field" />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Message Body</label>
-                        <textarea
-                            className="input-field font-mono text-xs leading-relaxed"
-                            rows={14}
-                            defaultValue={emailTemplate.body}
-                        />
+                        <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Message Body</label>
+                        <textarea className="input-field font-mono text-[12px] leading-relaxed" rows={14} defaultValue={emailTemplate.body} />
                     </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-700/50">
+                <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
                     <button onClick={onClose} className="btn-secondary">Cancel</button>
-                    <button
-                        onClick={() => { alert('✅ Email sent successfully! (Simulated)'); onClose(); }}
-                        className="btn-primary flex items-center gap-2"
-                    >
-                        <Send className="h-4 w-4" />
-                        Send Email
+                    <button onClick={() => { alert('✅ Email sent successfully! (Simulated)'); onClose(); }} className="btn-primary flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[18px]">send</span>Send Email
                     </button>
                 </div>
             </div>

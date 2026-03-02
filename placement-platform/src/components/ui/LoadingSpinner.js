@@ -1,52 +1,20 @@
-export function LoadingSpinner({ text = 'Analyzing...' }) {
-    return (
-        <div className="flex flex-col items-center justify-center py-16 gap-6 fade-in-up">
-            {/* Animated AI brain */}
-            <div className="relative">
-                <div className="h-16 w-16 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 animate-pulse" />
-                </div>
-            </div>
-            <div className="text-center">
-                <p className="text-lg font-semibold text-slate-200">{text}</p>
-                <p className="text-sm text-slate-500 mt-1">AI is processing your data...</p>
-            </div>
-            {/* Animated dots */}
-            <div className="flex gap-2">
-                {[0, 1, 2].map((i) => (
-                    <div
-                        key={i}
-                        className="h-2 w-2 rounded-full bg-indigo-500"
-                        style={{
-                            animation: 'bounce 1.4s ease-in-out infinite',
-                            animationDelay: `${i * 0.2}s`,
-                        }}
-                    />
-                ))}
-            </div>
-            <style jsx>{`
-        @keyframes bounce {
-          0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-          40% { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
-        </div>
-    );
-}
+'use client';
 
-export function SkeletonLoader({ rows = 5 }) {
+export function LoadingSpinner({ text = 'Loading...' }) {
     return (
-        <div className="space-y-3 py-4">
-            {Array.from({ length: rows }).map((_, i) => (
-                <div key={i} className="flex gap-4 items-center">
-                    <div className="h-10 w-10 rounded-lg shimmer" />
-                    <div className="flex-1 space-y-2">
-                        <div className="h-4 rounded shimmer" style={{ width: `${70 + Math.random() * 30}%` }} />
-                        <div className="h-3 rounded shimmer" style={{ width: `${40 + Math.random() * 30}%` }} />
-                    </div>
-                </div>
-            ))}
+        <div className="bg-white rounded-[16px] p-12 flex flex-col items-center justify-center">
+            <div className="relative w-16 h-16 mb-6">
+                <div className="absolute inset-0 rounded-full border-4 border-gray-100"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#2563EB] animate-spin"></div>
+                <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-blue-300 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            </div>
+            <p className="text-[16px] font-semibold text-gray-900 mb-2">{text}</p>
+            <p className="text-[13px] text-gray-500">This may take a moment...</p>
+            <div className="flex gap-1.5 mt-4">
+                <div className="w-2 h-2 rounded-full bg-[#2563EB] animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 rounded-full bg-[#2563EB] animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 rounded-full bg-[#2563EB] animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            </div>
         </div>
     );
 }
