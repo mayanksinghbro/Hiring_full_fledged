@@ -1,31 +1,122 @@
 'use client';
 
-import { Briefcase, FileText, Plus, Upload, X, Zap, Tag } from 'lucide-react';
-import { useState } from 'react';
+import { Briefcase, FileText, Upload, X, Zap, Tag, Search, Sparkles } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+
+const MOCK_SKILLS = [
+    "Python", "PostgreSQL", "PHP", "Product Management", "Project Management",
+    "React", "React Native", "Redux", "Ruby", "Rust",
+    "Java", "JavaScript", "Jenkins", "JWT",
+    "Communication", "Critical Thinking", "C++", "C#", "CSS",
+    "Node.js", "Next.js", "NumPy",
+    "TypeScript", "TensorFlow", "Teamwork", "Time Management",
+    "Docker", "Django", "Data Analysis", "DevOps",
+    "AWS", "Azure", "Angular", "Agile",
+    "Machine Learning", "MongoDB", "MySQL", "Microservices",
+    "Git", "GraphQL", "Go", "Google Cloud",
+    "Kubernetes", "Kafka",
+    "Leadership", "Linux",
+    "SQL", "Swift", "Scrum", "Spring Boot",
+    "UI/UX Design", "Unity",
+    "Vue.js", "Verbal Communication",
+    "Figma", "Firebase", "Flutter",
+    "HTML", "Hadoop",
+    "Elasticsearch", "Express.js", "Empathy",
+    "Problem Solving", "Presentation Skills", "Power BI",
+    "System Design", "REST API", "CI/CD", "Testing",
+    "Data Structures", "Algorithms", "OOP", "Design Patterns"
+];
+
+const CHIP_COLORS = [
+    { bg: 'bg-violet-500/15', text: 'text-violet-300', border: 'border-violet-500/25', hover: 'hover:bg-violet-500/25' },
+    { bg: 'bg-cyan-500/15', text: 'text-cyan-300', border: 'border-cyan-500/25', hover: 'hover:bg-cyan-500/25' },
+    { bg: 'bg-amber-500/15', text: 'text-amber-300', border: 'border-amber-500/25', hover: 'hover:bg-amber-500/25' },
+    { bg: 'bg-emerald-500/15', text: 'text-emerald-300', border: 'border-emerald-500/25', hover: 'hover:bg-emerald-500/25' },
+    { bg: 'bg-rose-500/15', text: 'text-rose-300', border: 'border-rose-500/25', hover: 'hover:bg-rose-500/25' },
+    { bg: 'bg-blue-500/15', text: 'text-blue-300', border: 'border-blue-500/25', hover: 'hover:bg-blue-500/25' },
+    { bg: 'bg-fuchsia-500/15', text: 'text-fuchsia-300', border: 'border-fuchsia-500/25', hover: 'hover:bg-fuchsia-500/25' },
+    { bg: 'bg-teal-500/15', text: 'text-teal-300', border: 'border-teal-500/25', hover: 'hover:bg-teal-500/25' },
+];
 
 export default function CreateJobForm({ onAnalyze }) {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [competency, setCompetency] = useState('');
+    const [competencyInput, setCompetencyInput] = useState('');
     const [competencies, setCompetencies] = useState([]);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const [files, setFiles] = useState([]);
     const [dragOver, setDragOver] = useState(false);
+    const inputRef = useRef(null);
+    const dropdownRef = useRef(null);
 
-    const addCompetency = () => {
-        if (competency.trim() && !competencies.includes(competency.trim())) {
-            setCompetencies([...competencies, competency.trim()]);
-            setCompetency('');
-        }
+    // Filter skills based on input, exclude already selected
+    const filteredSkills = competencyInput.trim()
+        ? MOCK_SKILLS.filter(
+            (skill) =>
+                skill.toLowerCase().includes(competencyInput.toLowerCase()) &&
+                !competencies.includes(skill)
+        )
+        : [];
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (
+                inputRef.current && !inputRef.current.contains(e.target) &&
+                dropdownRef.current && !dropdownRef.current.contains(e.target)
+            ) {
+                setShowDropdown(false);
+                setHighlightedIndex(-1);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Show/hide dropdown based on filtered results
+    useEffect(() => {
+        setShowDropdown(filteredSkills.length > 0 && competencyInput.trim().length > 0);
+        setHighlightedIndex(-1);
+    }, [competencyInput]);
+
+    const handleSelectSkill = (skill) => {
+        setCompetencies((prev) => [...prev, skill]);
+        setCompetencyInput('');
+        setShowDropdown(false);
+        setHighlightedIndex(-1);
+        inputRef.current?.focus();
     };
 
     const removeCompetency = (c) => {
-        setCompetencies(competencies.filter((item) => item !== c));
+        setCompetencies((prev) => prev.filter((item) => item !== c));
     };
 
     const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
+        if (showDropdown && filteredSkills.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setHighlightedIndex((prev) => (prev < filteredSkills.length - 1 ? prev + 1 : 0));
+                return;
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : filteredSkills.length - 1));
+                return;
+            } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+                e.preventDefault();
+                handleSelectSkill(filteredSkills[highlightedIndex]);
+                return;
+            } else if (e.key === 'Escape') {
+                setShowDropdown(false);
+                setHighlightedIndex(-1);
+                return;
+            }
+        }
+        // Allow Enter to add custom competency if no dropdown selection
+        if (e.key === 'Enter' && competencyInput.trim() && !competencies.includes(competencyInput.trim())) {
             e.preventDefault();
-            addCompetency();
+            setCompetencies((prev) => [...prev, competencyInput.trim()]);
+            setCompetencyInput('');
         }
     };
 
@@ -49,6 +140,8 @@ export default function CreateJobForm({ onAnalyze }) {
         ];
         setFiles(mockFiles);
     };
+
+    const getChipColor = (index) => CHIP_COLORS[index % CHIP_COLORS.length];
 
     return (
         <div className="glass-card p-6 fade-in-up">
@@ -90,34 +183,81 @@ export default function CreateJobForm({ onAnalyze }) {
                         />
                     </div>
 
-                    {/* Competencies */}
+                    {/* Competencies with Autocomplete */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Expected Competencies</label>
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                value={competency}
-                                onChange={(e) => setCompetency(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder="e.g. React, TypeScript, System Design..."
-                                className="input-field flex-1"
-                            />
-                            <button onClick={addCompetency} className="btn-secondary flex items-center gap-1">
-                                <Plus className="h-4 w-4" />
-                                Add
-                            </button>
+                        <div className="flex items-center gap-2 mb-1.5">
+                            <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
+                            <label className="text-sm font-medium text-slate-400">Expected Competencies</label>
+                            <span className="text-xs text-slate-600">— type to search</span>
                         </div>
+
+                        <div className="relative">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+                                <input
+                                    ref={inputRef}
+                                    id="company-competency-input"
+                                    type="text"
+                                    value={competencyInput}
+                                    onChange={(e) => setCompetencyInput(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    onFocus={() => {
+                                        if (filteredSkills.length > 0) setShowDropdown(true);
+                                    }}
+                                    placeholder="e.g. React, TypeScript, System Design..."
+                                    className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-slate-900/70 border border-slate-600/50 text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-indigo-500/60 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                                    autoComplete="off"
+                                />
+                            </div>
+
+                            {/* Floating Dropdown */}
+                            {showDropdown && filteredSkills.length > 0 && (
+                                <div
+                                    ref={dropdownRef}
+                                    className="absolute left-0 right-0 top-full mt-1 max-h-52 overflow-y-auto rounded-lg bg-slate-800 border border-slate-600/50 shadow-2xl shadow-black/40 z-50"
+                                >
+                                    {filteredSkills.map((skill, idx) => (
+                                        <button
+                                            key={skill}
+                                            onClick={() => handleSelectSkill(skill)}
+                                            onMouseEnter={() => setHighlightedIndex(idx)}
+                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 ${idx === highlightedIndex
+                                                    ? 'bg-indigo-500/20 text-indigo-200'
+                                                    : 'text-slate-300 hover:bg-slate-700/70 hover:text-slate-100'
+                                                } ${idx !== filteredSkills.length - 1 ? 'border-b border-slate-700/30' : ''}`}
+                                        >
+                                            <Tag className="h-3 w-3 opacity-50 flex-shrink-0" />
+                                            <span>{skill}</span>
+                                            {idx === highlightedIndex && (
+                                                <span className="ml-auto text-xs text-indigo-400/70">↵ Enter</span>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Selected Competency Chips */}
                         {competencies.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-3">
-                                {competencies.map((c) => (
-                                    <span key={c} className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-300 border border-indigo-500/20">
-                                        <Tag className="h-3 w-3" />
-                                        {c}
-                                        <button onClick={() => removeCompetency(c)} className="ml-1 hover:text-red-400 transition-colors">
-                                            <X className="h-3 w-3" />
-                                        </button>
-                                    </span>
-                                ))}
+                                {competencies.map((c, idx) => {
+                                    const color = getChipColor(idx);
+                                    return (
+                                        <span
+                                            key={c}
+                                            className={`inline-flex items-center gap-1.5 rounded-full ${color.bg} ${color.text} ${color.border} border px-3 py-1 text-xs font-medium transition-all`}
+                                        >
+                                            {c}
+                                            <button
+                                                onClick={() => removeCompetency(c)}
+                                                className={`ml-0.5 rounded-full p-0.5 ${color.hover} transition-colors`}
+                                                aria-label={`Remove ${c}`}
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </span>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
