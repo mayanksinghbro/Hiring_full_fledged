@@ -34,7 +34,8 @@ Rules:
 - Write a professional but warm shortlisting email.
 - Include: [CANDIDATE_NAME], [ROLE], [COMPANY], [LINK_PLACEHOLDER] as editable tokens.
 - Keep tone encouraging but professional. Max 150 words. Do not fabricate interview details.
-- CRITICAL: You MUST escape all newlines as \\n. DO NOT use literal newlines anywhere in the JSON string output.
+- CRITICAL JSON RULE 1: You MUST escape all newlines as \\n. DO NOT use literal newlines anywhere in the JSON string output.
+- CRITICAL JSON RULE 2: You MUST escape all double quotes inside string values as \\" (e.g. "He said \\"yes\\""). Do NOT use raw double quotes inside any text fields.
 
 === SKILL 5: hallucination_guard ===
 Purpose: Validation layer after all generated output.
