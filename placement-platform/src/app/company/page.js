@@ -7,6 +7,24 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { mockResumeTexts } from '@/data/mockResumes';
 import ReputationBadge from '@/components/blockchain/ReputationBadge';
 import CreateOfferModal from '@/components/blockchain/CreateOfferModal';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+
+// Extract text from a PDF File object
+async function extractTextFromPDF(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ');
+        fullText += pageText + '\n';
+    }
+    return fullText.trim();
+}
 
 // Shared job store (simulates DB — all portals read from this)
 const sharedJobStore = {
@@ -45,7 +63,7 @@ export default function CompanyPortal() {
     }, [activeTab]);
 
     const handleAnalyze = async (formData) => {
-        const { title, description, competencies, files } = formData;
+        const { title, description, competencies, topN, files } = formData;
         setJobTitle(title);
         setAnalyzing(true);
         setShowLeaderboard(false);
@@ -57,23 +75,47 @@ export default function CompanyPortal() {
             competencies.length > 0 ? `\nRequired Competencies: ${competencies.join(', ')}` : '',
         ].join('');
 
-        const resumes = files.map((fileName, index) => ({
-            id: `CND-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-            fileName,
-            text: mockResumeTexts[fileName] || `Resume for candidate ${index + 1}. Generic resume with basic skills.`,
-        }));
+        const resumes = [];
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const fileName = file.name || file;
+            let text = '';
+
+            // Try extracting real PDF text if the file has content (size > 0)
+            if (file instanceof File && file.size > 0) {
+                try {
+                    text = await extractTextFromPDF(file);
+                } catch (err) {
+                    console.warn(`Failed to extract text from ${fileName}:`, err);
+                }
+            }
+
+            // Fall back to mock data only if extraction yielded nothing (e.g. demo files)
+            if (!text || text.length < 20) {
+                text = mockResumeTexts[fileName] || `Resume for candidate ${i + 1}. Generic resume with basic skills.`;
+            }
+
+            resumes.push({
+                id: `CND-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+                fileName,
+                text,
+            });
+        }
 
         try {
             const response = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ jobDescription, resumes }),
+                body: JSON.stringify({ jobDescription, resumes, competencies }),
             });
 
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || 'Analysis failed');
 
-            setCandidates(data.candidates);
+            const sortedCandidates = data.candidates;
+            const finalCandidates = topN > 0 ? sortedCandidates.slice(0, topN) : sortedCandidates;
+
+            setCandidates(finalCandidates);
             setShowLeaderboard(true);
 
             // Save to shared store (simulates DB write)
@@ -83,10 +125,11 @@ export default function CompanyPortal() {
                 description,
                 competencies,
                 resumeCount: files.length,
-                candidatesShortlisted: data.candidates.filter(c => c.overallScore >= 70).length,
+                candidatesShortlisted: finalCandidates.filter(c => c.matchScore >= 70).length,
                 status: 'active',
                 postedAt: new Date().toISOString(),
-                candidates: data.candidates,
+                candidates: finalCandidates,
+                topN,
             };
             sharedJobStore.addJob(newJob);
             setPostedJobs(sharedJobStore.getJobs());

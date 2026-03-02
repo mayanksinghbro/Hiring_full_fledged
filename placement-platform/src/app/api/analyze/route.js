@@ -6,72 +6,68 @@ You are an elite, highly critical Technical Recruiter and HR Data Analyst. Your 
 
 Instructions:
 
-You will be provided with a Job Description and a Candidate Resume.
+1. You will be provided with a complete Job Description (title, description, and required competencies) and a Candidate Resume.
 
-You must compare the candidate's actual skills, experience, and projects directly against the competencies required in the JD.
+2. You MUST deeply analyze the candidate's specific PROJECTS, INTERNSHIP/WORK EXPERIENCE, and LISTED SKILLS and compare them directly against the JD requirements.
 
-DO NOT give a generic positive response. If the candidate lacks a required skill mentioned in the JD, you must explicitly state it.
+3. DO NOT give generic or vague responses. Every point you make MUST reference a specific item from the resume (e.g., "Built a real-time chat app using Socket.io" or "Interned at Google working on data pipelines") and explain how it maps (or doesn't map) to the JD requirements.
 
-If the JD changes, your analysis must drastically change to reflect the new requirements.
+4. For critical_missing_skills: ONLY list skills/technologies that are EXPLICITLY written in the JD's Required Competencies or job description text. Do NOT invent, infer, or add any skills that are not directly mentioned in the JD. If the JD says "Python, React" then the ONLY possible missing skills are Python and React — nothing else.
+
+5. For relevant_projects and relevant_experience: pick ONLY items from the resume that are directly relevant to the JD. Include a brief reason explaining why each is relevant. If nothing is relevant, return empty arrays.
+
+6. The justification MUST be 3-4 sentences, citing specific resume items (project names, company names, technologies used) and mapping them to JD requirements. Never say things like "strong candidate" or "good fit" without citing evidence.
 
 Output Format (Strict JSON):
 You must output your analysis in the following strict JSON format. Do not include markdown formatting or outside text.
 {
-"match_score_out_of_100": [Insert integer based strictly on skill overlap],
-"key_strengths": ["[Specific matching skill 1]", "[Specific matching skill 2]"],
-"critical_missing_skills": ["[Required skill in JD not found in resume]"],
-"justification": "[A crisp, 2-sentence explanation of exactly why they got this score for THIS specific job.]"
+  "match_score_out_of_100": <integer based strictly on JD skill/experience overlap>,
+  "key_strengths": ["<Specific matching skill from resume that JD requires>", "..."],
+  "critical_missing_skills": ["<Required skill/tech in JD NOT found in resume>", "..."],
+  "relevant_projects": ["<Project name from resume — brief reason it's relevant to JD>", "..."],
+  "relevant_experience": ["<Internship/role from resume — brief reason it's relevant to JD>", "..."],
+  "justification": "<3-4 sentences citing specific projects, internships, and skills from the resume, explaining exactly how they align or don't align with this JD's requirements.>"
 }`;
 
-function buildPrompt(jobDescription, resumeText) {
+function buildPrompt(jobDescription, resumeText, competencies) {
     return `Inputs:
-Job Description:
-"""
-${jobDescription}
-"""
 
-Candidate Resume:
-"""
+=== JOB DESCRIPTION ===
+${jobDescription}
+=== END JOB DESCRIPTION ===
+
+=== REQUIRED COMPETENCIES (EXACT LIST) ===
+${competencies && competencies.length > 0 ? competencies.join(', ') : 'See job description text above'}
+=== END REQUIRED COMPETENCIES ===
+
+=== CANDIDATE RESUME ===
 ${resumeText}
-"""`;
+=== END CANDIDATE RESUME ===
+
+IMPORTANT: The REQUIRED COMPETENCIES listed above are the ONLY skills you should check against. For critical_missing_skills, ONLY include items from this exact list that are NOT found in the resume. Do NOT add any other skills.
+Analyze this candidate's resume against the job description above. Focus on their specific projects, work experience, and skills. Be detailed and cite specific items from the resume.`;
 }
 
 function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Intelligent fallback: analyze resume text against JD keywords locally
-function localAnalysis(jobDescription, resumeText, candidateId) {
-    const jdLower = jobDescription.toLowerCase();
+// Intelligent fallback: analyze resume text against ONLY the user-provided competencies
+function localAnalysis(jobDescription, resumeText, candidateId, competencies = []) {
     const resumeLower = resumeText.toLowerCase();
 
-    // Extract skills from JD
-    const commonSkills = [
-        'react', 'next.js', 'typescript', 'javascript', 'python', 'java', 'go', 'c++',
-        'node.js', 'express', 'django', 'flask', 'spring boot',
-        'aws', 'gcp', 'azure', 'docker', 'kubernetes', 'terraform',
-        'postgresql', 'mongodb', 'redis', 'mysql', 'dynamodb',
-        'system design', 'data structures', 'algorithms', 'machine learning',
-        'pytorch', 'tensorflow', 'react native', 'flutter', 'swift',
-        'graphql', 'rest api', 'microservices', 'ci/cd', 'jenkins',
-        'figma', 'tailwind', 'vue.js', 'svelte', 'angular',
-        'kafka', 'rabbitmq', 'elasticsearch', 'prometheus', 'grafana',
-        'git', 'linux', 'sql', 'nosql', 'agile', 'scrum',
-    ];
+    // Use ONLY the competencies the user explicitly listed — never invent skills
+    const requiredSkills = competencies.map(c => c.toLowerCase());
 
-    const jdSkills = commonSkills.filter((s) => jdLower.includes(s));
-    const resumeSkills = commonSkills.filter((s) => resumeLower.includes(s));
+    const matched = requiredSkills.filter(s => resumeLower.includes(s));
+    const missing = requiredSkills.filter(s => !resumeLower.includes(s));
 
-    const matched = jdSkills.filter((s) => resumeSkills.includes(s));
-    const missing = jdSkills.filter((s) => !resumeSkills.includes(s));
-    const extras = resumeSkills.filter((s) => !jdSkills.includes(s));
-
-    // Score based on skill overlap
+    // Score based on skill overlap against ONLY user-provided competencies
     let score = 0;
-    if (jdSkills.length > 0) {
-        score = Math.round((matched.length / jdSkills.length) * 80) + Math.min(extras.length * 2, 15);
+    if (requiredSkills.length > 0) {
+        score = Math.round((matched.length / requiredSkills.length) * 85) + 10;
     } else {
-        score = Math.min(50 + resumeSkills.length * 3, 85);
+        score = 50; // No competencies provided, neutral score
     }
 
     // Add some variance based on experience mentions
@@ -85,24 +81,32 @@ function localAnalysis(jobDescription, resumeText, candidateId) {
     // Clamp
     score = Math.max(20, Math.min(score, 98));
 
+    // Extract project and experience mentions from resume
+    const projectMatches = resumeText.match(/(?:PROJECTS?|PROJECT WORK)[\s\S]*?(?=SKILLS|ACHIEVEMENTS|EDUCATION|$)/i);
+    const experienceMatches = resumeText.match(/(?:EXPERIENCE|WORK EXPERIENCE|INTERNSHIP)[\s\S]*?(?=PROJECTS?|SKILLS|ACHIEVEMENTS|$)/i);
+    const projectLines = projectMatches ? projectMatches[0].split('\n').filter(l => l.trim() && !l.match(/^(PROJECTS?|PROJECT WORK)/i)).slice(0, 3).map(l => l.trim().replace(/^[•\-*]\s*/, '')) : [];
+    const experienceLines = experienceMatches ? experienceMatches[0].split('\n').filter(l => l.trim() && !l.match(/^(EXPERIENCE|WORK)/i) && l.match(/intern|engineer|developer|analyst|researcher|assistant/i)).slice(0, 2).map(l => l.trim().replace(/^[•\-*]\s*/, '')) : [];
+
     const justification = matched.length > 0
-        ? `Candidate demonstrates strong alignment with ${matched.slice(0, 3).join(', ')} skills required for this role. ${missing.length > 0 ? `However, lacks ${missing.slice(0, 2).join(' and ')} which are critical requirements.` : 'Shows comprehensive coverage of the required tech stack.'}`
-        : `Candidate's skill profile has limited overlap with the specific requirements of this JD. ${extras.length > 0 ? `Brings strong ${extras.slice(0, 2).join(', ')} skills but these don't align with core role needs.` : 'Resume needs stronger alignment with the listed competencies.'}`;
+        ? `Resume shows direct skill overlap in ${matched.slice(0, 3).join(', ')} which are listed as required competencies. ${experienceLines.length > 0 ? `Their experience (${experienceLines[0]}) provides hands-on exposure relevant to this role. ` : ''}${missing.length > 0 ? `However, the resume lacks ${missing.slice(0, 2).join(' and ')} which are explicitly required competencies.` : `${projectLines.length > 0 ? `Projects like ${projectLines[0]} demonstrate practical application of required skills.` : 'Covers all listed competencies.'}`}`
+        : `Candidate's resume does not mention any of the required competencies (${requiredSkills.slice(0, 4).join(', ')}). ${missing.length > 0 ? `Missing: ${missing.slice(0, 3).join(', ')}.` : ''}`;
 
     return {
         id: candidateId,
         matchScore: score,
-        keyStrengths: matched.length > 0 ? matched.slice(0, 5) : extras.slice(0, 3),
+        keyStrengths: matched.length > 0 ? matched.slice(0, 5) : [],
         criticalMissingSkills: missing.slice(0, 4),
+        relevantProjects: projectLines.slice(0, 3),
+        relevantExperience: experienceLines.slice(0, 2),
         justification,
         shortlisted: false,
     };
 }
 
-async function analyzeWithRetry(model, jobDescription, resume, index, maxRetries = 2) {
+async function analyzeWithRetry(model, jobDescription, resume, index, competencies = [], maxRetries = 2) {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-            const prompt = buildPrompt(jobDescription, resume.text);
+            const prompt = buildPrompt(jobDescription, resume.text, competencies);
             const result = await model.generateContent(SYSTEM_PROMPT + '\n\n' + prompt);
             const responseText = result.response.text();
 
@@ -123,6 +127,8 @@ async function analyzeWithRetry(model, jobDescription, resume, index, maxRetries
                 matchScore: analysis.match_score_out_of_100 || 0,
                 keyStrengths: analysis.key_strengths || [],
                 criticalMissingSkills: analysis.critical_missing_skills || [],
+                relevantProjects: analysis.relevant_projects || [],
+                relevantExperience: analysis.relevant_experience || [],
                 justification: analysis.justification || 'No justification provided.',
                 shortlisted: false,
                 source: 'gemini',
@@ -140,7 +146,7 @@ async function analyzeWithRetry(model, jobDescription, resume, index, maxRetries
     // All retries failed — use intelligent local fallback
     console.log(`Using local analysis fallback for resume ${index}`);
     return {
-        ...localAnalysis(jobDescription, resume.text, resume.id),
+        ...localAnalysis(jobDescription, resume.text, resume.id, competencies),
         fileName: resume.fileName,
         source: 'local-fallback',
     };
@@ -148,7 +154,7 @@ async function analyzeWithRetry(model, jobDescription, resume, index, maxRetries
 
 export async function POST(request) {
     try {
-        const { jobDescription, resumes } = await request.json();
+        const { jobDescription, resumes, competencies = [] } = await request.json();
 
         if (!jobDescription || !resumes || resumes.length === 0) {
             return NextResponse.json(
@@ -163,7 +169,7 @@ export async function POST(request) {
             // No API key — use local analysis for all resumes
             console.log('No Gemini API key configured, using local analysis');
             const results = resumes.map((resume, i) => ({
-                ...localAnalysis(jobDescription, resume.text, resume.id),
+                ...localAnalysis(jobDescription, resume.text, resume.id, competencies),
                 fileName: resume.fileName,
                 source: 'local-no-key',
             }));
@@ -186,7 +192,7 @@ export async function POST(request) {
         const results = [];
         for (let i = 0; i < resumes.length; i++) {
             console.log(`Analyzing resume ${i + 1}/${resumes.length}: ${resumes[i].fileName}`);
-            const result = await analyzeWithRetry(model, jobDescription, resumes[i], i);
+            const result = await analyzeWithRetry(model, jobDescription, resumes[i], i, competencies);
             results.push(result);
 
             // 2s delay between requests for free tier safety
