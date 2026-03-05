@@ -4,7 +4,7 @@ import { useState } from 'react';
 import EmailModal from './EmailModal';
 import ResumeViewerModal from './ResumeViewerModal';
 
-export default function CandidateLeaderboard({ candidates, jobTitle, resumeTexts }) {
+export default function CandidateLeaderboard({ candidates, jobTitle, resumeTexts, onOffer }) {
     const [emailCandidate, setEmailCandidate] = useState(null);
     const [viewCandidate, setViewCandidate] = useState(null);
     const [shortlisted, setShortlisted] = useState({});
@@ -170,6 +170,19 @@ export default function CandidateLeaderboard({ candidates, jobTitle, resumeTexts
                                                     <span className="material-symbols-outlined text-[14px]">mail</span>
                                                     {shortlisted[candidate.id] ? 'Shortlisted ✓' : 'Shortlist & Email'}
                                                 </button>
+                                                {onOffer && (
+                                                    <button
+                                                        onClick={() => onOffer(candidate)}
+                                                        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-bold
+                                                                   bg-gradient-to-r from-indigo-600 to-purple-600 text-white
+                                                                   border border-indigo-500/30 shadow-md shadow-indigo-900/20
+                                                                   hover:from-indigo-500 hover:to-purple-500 hover:shadow-lg hover:shadow-indigo-900/30
+                                                                   transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[14px]">verified</span>
+                                                        Issue Verified Offer
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
